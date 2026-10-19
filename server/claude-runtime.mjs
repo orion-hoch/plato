@@ -36,7 +36,7 @@ export function createClaudeRuntime({ env = process.env, spawnImpl = spawn } = {
     return gates[role](() => new Promise((resolve, reject) => {
       if (signal?.aborted) { reject(new CodexError(499, 'Canceled.')); return; }
       const startedAt = performance.now();
-      const args = ['-p', '--model', settings.model, '--effort', EFFORT[effort || settings.effort] || 'low',
+      const args = ['-p', '--no-session-persistence', '--model', settings.model, '--effort', EFFORT[effort || settings.effort] || 'low',
         '--input-format', 'stream-json', '--output-format', 'stream-json', '--verbose', ...(onText ? ['--include-partial-messages'] : []),
         '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--system-prompt', `${instructions}${GUARD}`,
         ...(schema ? ['--json-schema', JSON.stringify(schema)] : [])];

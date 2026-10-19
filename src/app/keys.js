@@ -44,7 +44,9 @@ export function createKeys({ toggleTalk, now, session, ink, bridge, sending, typ
       if (typing) { session.current?.sendUserActivity(); bridge.current?.typingStarted(); }
       if (target?.closest?.('input, select, [contenteditable="true"], .course-tree, .zone')) return;
       // Space with nothing typed: talking on or off (the talk button), anywhere but a button, a field or a work zone.
-      if (event.key === ' ' && !now.current.typed && !event.metaKey && !event.ctrlKey && !event.altKey && !target?.closest?.('button')) { event.preventDefault(); toggleTalk?.(); return; }
+      // Not in a text box other than the conversation's own line (19 Oct: it took every space out of the new-course form's "What
+      // are you studying for?").
+      if (event.key === ' ' && !now.current.typed && !(target?.closest?.('textarea') && target !== typer.current) && !event.metaKey && !event.ctrlKey && !event.altKey && !target?.closest?.('button')) { event.preventDefault(); toggleTalk?.(); return; }
       if ((event.metaKey || event.ctrlKey) && !event.shiftKey && event.key.toLowerCase() === 'z' && !now.current.typed && ink.current?.strokes().length) { event.preventDefault(); ink.current.undo(); return; }
       if (event.metaKey || event.ctrlKey || event.altKey || event.defaultPrevented || target?.closest?.('textarea')) return;
       // Enter on a selection's own tiles hands it in (Space still presses one).

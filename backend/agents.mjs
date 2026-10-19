@@ -55,7 +55,7 @@ export function agent(cwd, brief, task = 'Begin.', { model = process.env.LUNA_CL
         '-m', codexModel(model), ...codexFence(cwd, dirs), '-c', 'web_search="disabled"',
         '-c', 'approval_policy="never"', '-c', `model_reasoning_effort=${JSON.stringify(effort)}`, '-c', 'project_doc_max_bytes=0',
         '-c', `developer_instructions=${JSON.stringify(brief)}`, ...dirs.flatMap(d => ['--add-dir', d]), '-'], { cwd, env: cliEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
-      : spawn('claude', ['-p', '--model', model, '--output-format', 'stream-json', '--verbose',
+      : spawn('claude', ['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose',
         '--tools', 'Read,Write,Edit,Glob,Grep,Bash', '--allowedTools', `Bash,Edit(/${cwd}/**)`,
         '--permission-mode', 'dontAsk', ...dirs.flatMap(d => ['--add-dir', d]), '--strict-mcp-config', '--setting-sources', '', '--settings', claudeSettings(cwd, dirs),
         '--append-system-prompt', brief], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
@@ -94,7 +94,7 @@ export function ask(system, input, { model = 'opus', lane = 'heavy', effort, tim
   if (PROVIDER === 'codex') return (codexRuntime ??= createRuntime()).ask({ role: lane, instructions: system, input, onText, effort, timeoutMs }).then(r => r.text);
   const cwd = mkdtempSync(path.join(tmpdir(), 'plato-ask-')); // empty: no project files, settings or memory of anyone's
   return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['-p', '--model', model, '--output-format', 'stream-json', '--verbose', ...(onText ? ['--include-partial-messages'] : []),
+    const child = spawn('claude', ['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose', ...(onText ? ['--include-partial-messages'] : []),
       ...(effort ? ['--effort', effort] : []), '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
     let result = null, err = '';
     const timer = setTimeout(kill(child), timeoutMs);

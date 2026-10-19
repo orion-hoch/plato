@@ -1,3 +1,5 @@
+import { rmSync } from 'node:fs';
+import path from 'node:path';
 import { newId } from './core/util.mjs';
 import { s, validate } from './core/shape.mjs';
 import { AppError } from './core/errors.mjs';
@@ -74,6 +76,10 @@ export function installExams(app) {
     const exam = db.get('exams', examId);
     if (!exam || exam.deletionGeneration !== deletionGeneration) return { state: 'stale' };
     app.blobs.deleteExam(examId);
+    // Its study guide, sources and kits, and the student's checkpoint of it (19 Oct: these stayed on disk after a delete).
+    const { studyDir, checkpointDir } = app.config;
+    if (studyDir && /^exam_[\w-]+$/.test(examId)) rmSync(path.join(studyDir, examId), { recursive: true, force: true });
+    if (checkpointDir) for (const end of ['', '.prev']) rmSync(path.join(checkpointDir, `${examId}.json${end}`), { force: true });
     db.tx(() => {
       for (const hook of app.hooks.examDeleted) hook(exam);
       db.prepare('DELETE FROM jobs WHERE exam_id = ? AND id != ?').run(examId, ctx.job.id);

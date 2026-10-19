@@ -57,6 +57,9 @@ export default function App() {
   // The conversation, both voices: [{ id, who: 'plato'|'me', text, final }], newest last; whether its panel is open, and
   // whether the server can be reached.
   const [log, setLog] = useState(() => first.current?.log || []), [logOpen, setLogOpen] = useState(remembered), [offline, setOffline] = useState(false);
+  // First run: the model CLI this install uses isn't signed in (server /setup), so Plato can't answer: say how, in the chat.
+  const [unready, setUnready] = useState('');
+  useEffect(() => { void fetch('/setup').then(r => r.json()).then(st => { if (!st.ok) setUnready(st.provider === 'codex' ? 'Plato isn’t connected to ChatGPT yet: run `codex login` in a terminal, then restart Plato.' : 'Plato isn’t connected to Claude yet: run `claude` in a terminal and log in, then restart Plato.'); }).catch(() => {}); }, []);
   // A document Plato has been handed: its title and chapters, and the chapter being studied.
   const [material, setMaterial] = useState(null);
   const [chapter, setChapter] = useState(-1);
@@ -299,7 +302,7 @@ export default function App() {
           beside it), and at the foot the line being typed, never what the student sent (an empty line only on a phone,
           where tapping opened its keyboard). A tap on it opens typing (on a phone, its keyboard: focus has to come inside
           the tap). A stone's name shows in Plato's place for a moment. */}
-      <ConversationLog entries={log} chat={Boolean(VOICE.textOnly)} typed={typed} caret={caret} typing={typing && TOUCH} unit={unit} error={say(error) || (offline ? OFFLINE : '')} quiet={Boolean(shown) && !error && !pageUp && !typed && !typing}
+      <ConversationLog entries={log} chat={Boolean(VOICE.textOnly)} typed={typed} caret={caret} typing={typing && TOUCH} unit={unit} error={say(error) || unready || (offline ? OFFLINE : '')} quiet={Boolean(shown) && !error && !pageUp && !typed && !typing}
         open={logOpen} onOpen={() => { setLogOpen(true); remember(true); }} onClose={() => { setLogOpen(false); remember(false); }}
         onTap={() => { if (!getSelection()?.toString()) typer.current?.focus(); }}/>
       <Ink api={ink} page={pageUp ? page : null} erasing={erasing} marking={marking} onChange={inkChanged}

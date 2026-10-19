@@ -55,7 +55,7 @@ const app = createBackend({
   clock,
   providers: createLiveProviders({ runtime, clock }),
   // New courses publish their topics from their files and study guide (the harness); LUNA_KNOWLEDGE=build: the older knowledge build.
-  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), figureDir, animationDir, knowledgeSource: process.env.LUNA_KNOWLEDGE === 'build' ? null : 'guide' }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
+  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), checkpointDir: path.join(dataDir, 'checkpoints'), figureDir, animationDir, knowledgeSource: process.env.LUNA_KNOWLEDGE === 'build' ? null : 'guide' }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
 });
 const api = createHttpHandler(app, { localPrincipalFile: path.join(dataDir, 'local-principal.json') });
 app.jobs.releaseOrphanedLeases();
@@ -212,7 +212,7 @@ async function materialNote(req, res) {
 // their writing and drafts), saved by the page as it changes so a reload, a restart or a lost session brings it all back
 // (19 Oct, the user: "really have a good checkpoint system in place"). <data>/checkpoints/<examId>.json, written whole
 // (a temp file renamed over it) with the one before kept as .prev.
-const checkpointDir = path.join(dataDir, 'checkpoints');
+const checkpointDir = app.config.checkpointDir;
 async function checkpoint(req, res) {
   const m = new URL(req.url, 'http://localhost').pathname.match(/^\/checkpoint\/(exam_[\w-]{6,40})$/);
   if (!m) return false;

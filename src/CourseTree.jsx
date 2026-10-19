@@ -197,6 +197,8 @@ export default function CourseTree({ examId, title, open, onClose, onFocus }) {
     {t.children.length > 0 && rows(t.children, depth + 1)}
   </li>)}</ol>;
   const shown = learnerMap(map, data?.focus ? focusIds : null), focusName = data?.focus?.name;
+  // No course yet (a new install): the new-course form is the page (19 Oct: it showed an empty course's placeholders for good).
+  if (exams && !exams.some(e => !['deleted', 'deleting'].includes(e.status))) return <NewCourse onClose={onClose}/>;
   return <div className={`course-tree${shown ? ' has-map' : ''}`} role="dialog" aria-label="Your course">
     <header className="tree-bar">
       <Courses current={examId} list={exams}/>

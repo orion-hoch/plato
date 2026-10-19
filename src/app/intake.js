@@ -64,7 +64,9 @@ export function createIntake({ bridge, session, study, now, ink, screen, typer, 
     const left = event => { if (!event.relatedTarget) { held.current = null; setDragging(false); } };
     // Every file dropped is taken; the page and the student's writing on it stay.
     const drop = event => {
-      if (!carriesFile(event)) return;
+      // A drop something on the page already took (the new-course form, the course's material) is theirs (19 Oct: one dropped
+      // on the new-course form also made a second course here, named after the file).
+      if (!carriesFile(event) || event.defaultPrevented) return;
       event.preventDefault();
       held.current = null;
       setDragging(false);

@@ -39,7 +39,7 @@ function claudeFor(args) {
  *  (17 Oct: thinking is most of the wait; unset keeps the CLI's default). */
 function claudeStream(system, input, { model, onDelta, timeoutMs }) {
   return new Promise((resolve, reject) => {
-    const child = claudeFor(['-p', '--model', model, '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
+    const child = claudeFor(['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
       '--tools', '', ...(process.env.LUNA_CLAUDE_EFFORT ? ['--effort', process.env.LUNA_CLAUDE_EFFORT] : []), '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system]);
     let buffer = '', result = null, err = '';
     const timer = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('Claude took too long.')); }, timeoutMs);
