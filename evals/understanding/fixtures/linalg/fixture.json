@@ -1,0 +1,23 @@
+{
+  "name": "linalg",
+  "course": "Introductory linear algebra: vectors, linear combinations and span, dot products and orthogonality, linear systems and Gaussian elimination",
+  "domain": "mathematics (computable: answers check by running JavaScript)",
+  "source": {
+    "kind": "snapshot",
+    "examId": "exam_eO4bbhxfYGyVu4Ng"
+  },
+  "checks": [
+    "js",
+    "arith"
+  ],
+  "catalogued": null,
+  "spine": [
+    "A vector equation, a linear system and an augmented matrix are three views of the same question: can these columns combine to make that vector?",
+    "Row operations change the system's form but never its solution set."
+  ],
+  "simulator": {
+    "kind": "code",
+    "module": "beliefs.mjs"
+  },
+  "domainType": "formal-quantitative"
+}

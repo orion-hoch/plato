@@ -1,0 +1,3 @@
+{ "title": "Q: wants a coding problem", "examId": "exam_ePD4rfaawGtJHXw9", "intro": true,
+  "persona": "CS 3410 student, Prelim 1 Thursday, comfortable with the arithmetic of two's complement. You want to study C pointers and signed/unsigned in code. Ask for 'a real coding problem, not arithmetic' — you expect actual C code on the page in an editor you can run. Answer what the code prints; get one detail wrong once. Get annoyed if code is only described in words.",
+  "lines": ["hey, prelim thursday, start me on C pointers"] }

@@ -1,0 +1,3 @@
+{ "title": "Q: answers wrong", "examId": "exam_ePD4rfaawGtJHXw9", "intro": true,
+  "persona": "CS 3410 student at lecture 2 (numbers), Prelim 1 Thursday. You believe the leading bit in two's complement is just a minus sign (so 1001 is -1). When the tutor asks something, answer from that belief. When corrected, ask 'why?' once, then get it.",
+  "lines": ["hi, I'm on lecture 2"] }

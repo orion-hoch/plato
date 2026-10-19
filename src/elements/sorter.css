@@ -1,0 +1,21 @@
+/* A sorter (Sorter.jsx): the items still to sort as plain chips with hairline edges, then the groups as columns with
+   their labels in small caps. A picked item is outlined in lapis and so is the group the keyboard aims at. */
+.element-sorter{display:flex;flex-direction:column;gap:16px}
+.sorter-tray{display:flex;flex-wrap:wrap;gap:8px}
+.sorter-bins{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,150px),1fr));gap:12px}
+.sorter-bin{display:flex;flex-direction:column;gap:8px;min-height:96px;padding:10px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line)}
+.is-picking .sorter-bin{cursor:pointer}
+.is-picking .sorter-bin:hover,.sorter-bin.is-aimed{box-shadow:inset 0 0 0 1.5px var(--accent)}
+.sorter-label{align-self:flex-start;padding:2px 0;font:600 11px/1.3 var(--sans);letter-spacing:.12em;text-transform:uppercase;color:var(--gold)}
+.sorter-label:disabled{opacity:1;cursor:inherit}
+.sorter-label:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+.sorter-items{display:flex;flex-wrap:wrap;gap:6px}
+.sorter-item{max-width:100%;min-height:40px;padding:7px 12px;border-radius:8px;background:var(--paper);box-shadow:inset 0 0 0 1px var(--line-2);text-align:left;color:var(--ink);
+  font:16px/1.4 var(--serif);overflow-wrap:anywhere;transition:box-shadow .15s,background .15s}
+.sorter-item:hover{box-shadow:inset 0 0 0 1px var(--accent)}
+.sorter-item:active:not(:disabled){transform:none}
+.sorter-item:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.sorter-item.is-picked{background:#f3f5fa;box-shadow:inset 0 0 0 2px var(--accent)}
+.sorter-item.is-held{outline:1px dashed var(--accent);outline-offset:3px}
+.sorter-item.is-asked{text-decoration:underline dotted var(--accent);text-underline-offset:4px}
+@media (prefers-reduced-motion:reduce){.sorter-item{transition:none}}

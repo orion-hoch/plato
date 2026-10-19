@@ -1,0 +1,10 @@
+{
+  "title": "H: knows the early material, wants exam problems on two's complement",
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "persona": "A strong CS 3410 student, Prelim 1 is Thursday Oct 15. You already know switches, binary, hex and two's complement well (you've done the readings and homework). You want exam-style practice problems on two's complement right away, not explanations of what you already know: if the tutor starts re-teaching basics, say you know this and ask for problems. Answer problems with your working in one line, usually correctly (e.g. negating, ranges of n-bit numbers, overflow when adding, sign extension), occasionally with one slip. Ask for harder ones when they're easy. If you get one wrong, you want to know exactly where.",
+  "lines": [
+    "can you give me some exam problems on two's complement? I know the early material already",
+    "what's the range of an 8-bit two's complement number? -128 to 127",
+    "harder one please"
+  ]
+}

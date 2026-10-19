@@ -1,0 +1,46 @@
+/* Plato's board tools on the page (BoardStage imports this): the live formula, quotes from the student's notes, and
+   the mark point_to leaves. Quiet, in the page's palette, nothing laid under the sheet. */
+
+/* The formula (Formula.jsx): the equation, a slim slider per variable with its value to edit, then the result. */
+.formula-live{margin:0;display:flex;flex-direction:column;gap:16px;max-width:36rem;container-type:inline-size}
+/* 16 Oct, the user: "prevent scrolling elements": a long equation is zoomed to fit by fit.js; it scrolls only past the 50% floor. */
+.formula-tex{overflow-x:auto;overflow-y:hidden}
+.formula-tex .katex-display{margin:0;text-align:left}
+.formula-tex .katex-display>.katex{text-align:left;font-size:1.12em}
+.formula-vars{display:grid;grid-template-columns:auto minmax(96px,1fr) auto;align-items:center;gap:8px 18px}
+.formula-var{display:contents}
+.formula-name{font:500 13px/1.3 var(--sans);color:var(--muted)}
+.formula-value{display:flex;align-items:baseline;gap:6px;font:15px/1.4 var(--mono);color:var(--ink)}
+.formula-value input{width:6.5ch;padding:2px 0;border:0;border-bottom:1px solid var(--line);border-radius:0;background:none;outline:none;text-align:right;font:inherit;color:inherit;font-variant-numeric:tabular-nums}
+.formula-value input:focus,.formula-value input:focus-visible{outline:none;border-bottom-color:var(--accent)}
+.formula-unit{font:13px var(--sans);color:var(--muted)}
+.formula-result{margin:0;padding-top:12px;border-top:1px solid var(--line);font-size:20px;line-height:1.4}
+.formula-result output{font-weight:600;font-variant-numeric:tabular-nums lining-nums}
+/* A slider: a hairline track, lapis up to the value (--at), and a small lapis thumb. */
+.formula-var input[type=range]{-webkit-appearance:none;appearance:none;width:100%;height:24px;margin:0;padding:0;cursor:pointer;background:
+  linear-gradient(var(--accent),var(--accent)) 0 50%/var(--at,0%) 2px no-repeat,linear-gradient(var(--line),var(--line)) 0 50%/100% 2px no-repeat}
+.formula-var input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border:2px solid #fff;border-radius:50%;background:var(--accent)}
+.formula-var input[type=range]::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:var(--accent)}
+.formula-var input[type=range]::-moz-range-track,.formula-var input[type=range]::-moz-range-progress{background:none}
+.formula-var input[type=range]:focus{outline:none}
+.formula-var input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid rgba(47,79,138,.35);outline-offset:1px}
+.formula-var input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid rgba(47,79,138,.35);outline-offset:1px}
+/* Narrow (by its own width, wherever the page puts it): each name on a line of its own over its slider. */
+@container(max-width:440px){.formula-vars{grid-template-columns:minmax(0,1fr) auto;gap:0 14px}.formula-name{grid-column:1/-1;margin-top:8px}}
+/* A phone zooms into a field typed in below 16px. */
+@media(pointer:coarse){.formula-value input{font-size:16px}}
+
+/* What the student's notes say (Notes.jsx), under Plato's material: the excerpt in the serif by a thin rule, and
+   where it comes from in small muted type. */
+.page-notes{margin:6px 0 0;padding:2px 0 2px 18px;border-left:2px solid var(--line-2)}
+.page-notes blockquote{margin:0}
+.page-notes .material:not(.is-inline){font-size:clamp(16px,8px + 1vw,18px);color:var(--ink-2)}
+.page-notes figcaption{margin-top:8px;font:500 12px/1.3 var(--sans);letter-spacing:.02em;color:var(--faint)}
+
+/* point_to: a soft lapis mark over part of the page that swells twice and fades after about four seconds; a line of
+   code gets the band and left rule the trace uses for the line about to run. */
+.page-point{position:absolute;z-index:1;pointer-events:none;border-radius:6px;background:rgba(47,79,138,.13);box-shadow:inset 0 -2px rgba(47,79,138,.45);
+  animation:page-point 4s ease-in-out both}
+.page-point.is-line{border-radius:0;box-shadow:inset 3px 0 var(--accent)}
+@keyframes page-point{0%{opacity:0}8%{opacity:1}20%{opacity:.45}32%{opacity:1}44%{opacity:.6}56%,84%{opacity:1}100%{opacity:0}}
+@media(prefers-reduced-motion:reduce){.page-point{animation:none}}

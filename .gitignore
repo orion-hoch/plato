@@ -1,0 +1,23 @@
+node_modules/
+dist/
+.env
+.env.*
+!.env.example
+.DS_Store
+test-results/
+.vite/
+
+data/
+artifacts/
+evals/runs/
+evals/understanding/cache/
+evals/lesson/*.json
+evals/lesson/*.log
+
+# Fetched by `npm run setup` (scripts/setup.mjs), not kept here:
+# the anatomy skill (github.com/wheresryan22/anatomy, MIT) and the logic simulator (github.com/jppellet/Logic-Circuit-Simulator, MIT)
+tools/anatomy/
+tools/logic-sim/
+tools/manim/.venv/
+tools/shelf/node_modules/
+tools/shelf/lib/

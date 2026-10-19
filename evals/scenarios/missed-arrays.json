@@ -1,0 +1,12 @@
+{
+  "title": "B: missed arrays lecture",
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "persona": "A diligent CS 3410 student who missed the lecture on arrays (and pointers) and wants to catch up from the readings before Prelim 1 on Oct 15. You keep asking where values actually live in memory: where the array is, where each element is, what a pointer holds, stack versus heap. You follow along, sometimes ask a side question, and try the checks the tutor gives you.",
+  "lines": [
+    "I missed the lecture on arrays, can you summarize the main points from the readings?",
+    "where do the elements actually live in memory?",
+    "so if int a[4] starts at 0x1000, where is a[2]?",
+    "what's the difference between a and &a[0] then",
+    "ok can you check me on this"
+  ]
+}

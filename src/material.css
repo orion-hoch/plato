@@ -1,0 +1,52 @@
+/* What Plato puts on the page (BoardRichText and Diagram): plain crisp type on the sheet. Serif prose,
+   monospace code on a faint tint, booktabs tables, KaTeX math. Scoped to .material; inline material
+   (a choice label, a short prompt) takes its font from where it sits. */
+.material{overflow-wrap:break-word}
+.material:not(.is-inline){font-family:var(--serif);font-size:clamp(17px,9px + 1.1vw,20px);line-height:1.45;color:var(--ink)}
+.material>:first-child{margin-top:0}
+.material>:last-child{margin-bottom:0}
+.material p{margin:0 0 .65em;text-wrap:pretty}
+.material strong{font-weight:600}
+.material h3,.material h4,.material h5{margin:1.05em 0 .35em;font-weight:600;line-height:1.25}
+.material h3{font-size:1.2em}
+.material h4{font-size:1.08em}
+.material h5{font-size:1em}
+.material h6{margin:1.2em 0 .4em;font:600 .7em/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--muted)}
+.material ul,.material ol{margin:.35em 0 .7em;padding-left:1.35em}
+.material li+li,.material li>ul,.material li>ol{margin-top:.25em}
+.material li>ul,.material li>ol{margin-bottom:0}
+.material li::marker{color:var(--faint)}
+.material ol>li::marker{font:500 .8em var(--sans);font-variant-numeric:tabular-nums}
+.material blockquote{margin:.7em 0;padding:0 0 0 1em;border-left:2px solid var(--line);color:var(--ink-2)}
+.material hr{height:1px;margin:1.1em 0;border:0;background:var(--line)}
+
+/* Code: a sheet tint with a hairline edge. 16 Oct, the user: "prevent scrolling elements because they are really
+   annoying": long lines wrap inside the block, never scroll. */
+.material code{font-family:var(--mono);font-size:.84em;padding:.08em .3em;border-radius:4px;background:var(--line)}
+.material pre{margin:.7em 0;padding:12px 16px;border-radius:8px;background:var(--tint);font-size:max(13px,.74em);line-height:1.55;tab-size:4;white-space:pre-wrap;overflow-wrap:anywhere}
+.material pre code{padding:0;background:none;font-size:inherit;color:var(--ink)}
+.material .code-line{display:block}
+.material .tok-com,.zone-code .tok-com{color:var(--muted);font-style:italic}
+.material .tok-kw,.zone-code .tok-kw{color:var(--accent)}
+.material .tok-reg,.zone-code .tok-reg{color:var(--warm-deep)}
+.material .tok-num,.zone-code .tok-num{color:#826326}
+.material .tok-str,.zone-code .tok-str{color:#3a7355}
+
+/* Tables: rules, not boxes. Numbers line up. 16 Oct, the user: "prevent scrolling elements": cells wrap, and a table
+   still too wide is zoomed to fit by fit.js (overflow-x stays only past its 50% floor). */
+.material .table{margin:.7em 0;max-width:100%;overflow-x:auto}
+.material table{border-collapse:collapse;font-size:.9em;font-variant-numeric:tabular-nums lining-nums;border-top:1px solid var(--ink-2);border-bottom:1px solid var(--ink-2)}
+.material th,.material td{padding:.24em .85em;text-align:left;vertical-align:baseline;overflow-wrap:break-word}
+.material th{font-weight:600;border-bottom:1px solid var(--ink-2)}
+.material tbody tr+tr td{border-top:1px solid var(--line)}
+
+/* Math: KaTeX a little smaller than its default, to sit with the serif. 16 Oct, the user: "prevent scrolling elements":
+   a long display formula is zoomed to fit by fit.js; it scrolls only past the 50% floor. */
+.material .katex{font-size:1.08em}
+.material .formula.is-display{display:block;margin:.55em 0;padding:.15em 0;overflow-x:auto;overflow-y:hidden}
+.material .formula.is-display>.katex-display{margin:0}
+
+/* Diagrams: never larger than drawn, scaled to fit. 16 Oct, the user: "prevent scrolling elements": no floor, no
+   sideways scroll; a phone pinch-zooms a small label. */
+.material.is-diagram{margin:0;max-width:100%}
+.material.is-diagram>svg{display:block;width:var(--w);max-width:100%;height:auto;margin:0 auto}

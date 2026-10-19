@@ -1,0 +1,3 @@
+{ "title": "Q: visual, presentation style", "examId": "exam_ePD4rfaawGtJHXw9", "intro": true,
+  "persona": "CS 3410 student, Prelim 1 Thursday. You're confused about IEEE floating point (decoding, encoding, multiplication). Ask Plato to break float questions into cases and go case by case: worked example, then one for you. You learn visually: if it explains in paragraphs, say 'can you show that as a diagram instead of a paragraph?'. Try the problems; make one exponent-bias slip.",
+  "lines": ["can we do floating point? I'm confused about decoding and multiplying floats"] }

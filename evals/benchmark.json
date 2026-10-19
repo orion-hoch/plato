@@ -1,0 +1,9 @@
+{
+  "note": "Reference courses for the harness benchmark (evals/benchmark.mjs): deliberately different subjects. Add an essay or reading course here when there is one.",
+  "courses": [
+    { "dir": "data/study-guides/exam_9brmxohvc0CEQDkt", "course": "Cornell CS 2800 (discrete mathematics)", "known": "earlier topics: logic, sets, proofs, induction, graphs, roughly",
+      "topics": ["Equivalence classes, the quotient", "^Injectivity", "Strong induction and counting"] },
+    { "dir": "data/study-guides/exam_ePD4rfaawGtJHXw9", "course": "Cornell CS 3410 (computer system organization)", "known": "the course's earlier topics, roughly",
+      "topics": ["Two's complement", "Pointers: & and \\*", "FemtoProc"] }
+  ]
+}

@@ -1,0 +1,36 @@
+/* The workspace: one calm screen. The sphere is Plato, in the middle when nothing is shown; when Plato puts
+   something on the page, the sphere's own stones lay themselves round the page as its frame, --frame deep
+   (three stones, outside the page's box), turning to Plato's colour from the top while he speaks. The page
+   takes the middle and Plato's words stand below its frame; the student talks, types and writes at any time. */
+.study-screen{height:100svh;background:var(--bg);touch-action:none;touch-action:pinch-zoom;
+  --sphere-y:75px;--frame:30px;--page-w:min(760px,calc(100vw - 240px));--page-top:calc(12px + var(--frame));--page-bottom:172px}
+/* Wide screens, two columns: the page and its frame on the left (about 63%), from near the top of the screen to near
+   its foot, clear of the round buttons in the left margin (--gutter); the conversation in its own column on the right,
+   from --talk-left (interaction.css, agenda-strip.css). The flat mosaic's centred frame keeps the page centred. */
+@media(min-width:900px){
+  .study-screen{--gutter:80px;--page-w:min(900px,calc(63vw - var(--gutter) - 2 * var(--frame)));--page-bottom:calc(12px + var(--frame));
+    --talk-left:calc(var(--gutter) + 2 * var(--frame) + var(--page-w) + 40px)}
+  .study-screen .page{left:calc(var(--gutter) + var(--frame));right:auto}
+}
+/* Narrow screens: the page and its frame fill the width. */
+@media(max-width:860px){.study-screen{--frame:24px;--page-w:min(760px,calc(100vw - 24px - 2 * var(--frame)));--page-bottom:178px}}
+/* The sphere's centre stands this far above the middle of the screen (mosaicCircleCenter). */
+@media(max-width:519px){.study-screen{--sphere-y:80px}}
+.study-screen.has-page .voice-stage{opacity:0;pointer-events:none}
+/* A live mosaic is Plato listening, not a control: nothing to press. */
+.orb-button.is-live{cursor:default}
+/* Nothing about the mosaic is ever scaled by a press, not even its unseen press target. */
+.orb-button:active:not(:disabled){transform:none}
+
+/* A document's or a chapter's name, for a moment, in the caption's own place and type. */
+.study-name{position:absolute;top:100%;left:50%;transform:translateX(-50%);width:min(540px,calc(100vw - 48px));padding:6px 0 0;text-align:center;font-family:var(--serif);font-size:17px;font-style:italic;line-height:1.5;color:var(--muted);text-wrap:balance;pointer-events:none;z-index:6}
+.study-number{margin-right:8px;font-family:var(--sans);font-size:11px;font-style:normal;font-variant-numeric:tabular-nums;color:var(--gold)}
+/* Nothing is written at the foot of the page. These are there for a keyboard and a screen reader,
+   and can be seen only while a key has one of them. */
+.study-keys{position:absolute;left:50%;bottom:20px;transform:translateX(-50%);width:min(760px,calc(100vw - 48px));z-index:15;display:flex;flex-wrap:wrap;justify-content:center;gap:0 2px;max-height:124px;overflow-y:auto;font-family:var(--serif);opacity:0;pointer-events:none}
+.study-keys:has(:focus-visible){opacity:1;pointer-events:auto;background:#fff}
+.study-keys button{min-height:40px;padding:8px 10px;border-radius:9px;font-size:14px;line-height:1.4;color:var(--muted)}
+.study-keys button[aria-pressed="true"]{color:var(--ink);background:var(--tint)}
+@media(max-width:520px){.study-name{width:calc(100vw - 42px);font-size:16px;padding-top:5px}.study-keys{width:calc(100vw - 32px);bottom:12px;max-height:88px}}
+/* Without WebGL2 the sphere is one plain line (SphereCanvas). */
+.no-webgl{position:absolute;left:50%;top:calc(50% - var(--sphere-y));transform:translate(-50%,-50%);max-width:min(420px,calc(100% - 32px));margin:0;text-align:center;color:var(--muted);font:15px/1.5 var(--sans)}

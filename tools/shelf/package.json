@@ -1,0 +1,1 @@
+{"name":"plato-shelf","private":true,"description":"Browser libraries course kits may use (backend/lessons/kits.mjs); bundled into lib/ by build.mjs","dependencies":{"3dmol":"^2.5.5","cytoscape":"^3.34.4","d3":"^7.9.0","function-plot":"^1.26.0","jsxgraph":"^1.14.0","matter-js":"^0.20.0","smiles-drawer":"^2.4.1","vexflow":"^5.0.0"}}

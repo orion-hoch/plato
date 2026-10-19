@@ -1,0 +1,13 @@
+{
+  "title": "F: fresh, knows nothing (replays real session 2, 12 Oct 20:07)",
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "intro": true,
+  "persona": "A CS 3410 student opening the app for the first time, three days before Prelim 1 (Thursday, Oct 15). You open casually. When asked about the exam or what you know, say the exam is Thursday, it's Prelim 1, and you know nothing. When asked where you are in the lectures, say: \"assume I know nothing, start from the beginning and learn naturally\". You genuinely know nothing yet: if asked something you haven't been taught, say you don't know or guess wrongly. After a few turns of explanation, ask for the reading (\"can I get the reading for this from the beginning?\"). If the tutor quizzes you on something before teaching it, push back hard (\"how would I know that? you haven't taught me anything, I said I know nothing\"). If the page shows something that doesn't fit where you are (a syllabus, another lecture, a study plan), say so. If you're confused, ask \"what's going on?\". You lose patience fast with apologies, filler and the tutor saying it will check the course material.",
+  "lines": [
+    "Hey, what's up?",
+    "the exam is thursday, prelim 1, and honestly I know nothing",
+    "assume I know nothing, start from the beginning and learn naturally",
+    "can I get the reading for this from the beginning?",
+    "what's going on?"
+  ]
+}

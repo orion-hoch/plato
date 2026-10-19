@@ -1,0 +1,19 @@
+/* A number line (NumberLine.jsx): drawn on the sheet like the course diagrams; marks still to place or hidden marks
+   wait in a row of quiet chips under it, a hidden one held by a checkpoint outlined in dashed lapis. */
+/* 16 Oct, the user: "prevent scrolling elements": the line scales down under its 240px floor instead of scrolling. */
+.element-numberline{margin:0;display:flex;flex-direction:column;gap:10px;max-width:100%}
+.element-numberline svg{display:block;overflow:visible;max-width:100%;height:auto}
+.numberline-hit{fill:transparent;cursor:crosshair}
+.numberline-mark{outline:none}
+.numberline-mark[tabindex]{cursor:grab}
+.numberline-mark:focus-visible circle{stroke:var(--accent);stroke-width:3}
+.numberline-mark.is-asked circle{stroke:var(--accent);stroke-dasharray:2 2}
+.numberline-tray{display:flex;flex-wrap:wrap;gap:8px}
+.numberline-chip{min-height:34px;padding:4px 14px;border-radius:999px;background:#fff;box-shadow:inset 0 0 0 1px rgba(29,27,24,.18);
+  font:600 13px/1.3 var(--sans);color:var(--ink)}
+.numberline-chip:hover{box-shadow:inset 0 0 0 1px rgba(47,79,138,.6)}
+.numberline-chip.is-picked{color:var(--accent);box-shadow:inset 0 0 0 2px var(--accent)}
+.numberline-chip.is-held{outline:1.5px dashed var(--accent);outline-offset:3px}
+.numberline-chip.is-asked{color:var(--accent)}
+.numberline-q{margin-left:4px;color:var(--accent)}
+@media(prefers-reduced-motion:reduce){.numberline-chip{transition:none}}

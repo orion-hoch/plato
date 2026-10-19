@@ -1,0 +1,36 @@
+{
+  "name": "history",
+  "domainType": "textual-argumentative",
+  "course": "US history survey: Reconstruction (The American Yawp, chapter 15, with primary sources from The American Yawp Reader)",
+  "domain": "history (interpretive and argumentative: R1 facts, R4 interpretations; sourcing, contextualization, corroboration)",
+  "source": {
+    "kind": "sandbox",
+    "dir": "source",
+    "title": "The American Yawp ch. 15: Reconstruction, with Reader documents",
+    "mime": "text/markdown",
+    "fetch": "fetch.mjs",
+    "license": "CC BY-SA 4.0",
+    "note": "To be built by the Study pipeline in its sandbox, as bio was; then set source.sandbox and source.examId (or run --build-fixture here).",
+    "sandbox": "/private/tmp/claude-501/-Users-orionhoch-Desktop-study/f99c890b-e324-4c8a-b230-00cb01019671/scratchpad/study-sbx",
+    "examId": "exam_27bHK3MyYitCeZLw"
+  },
+  "checks": [],
+  "catalogued": {
+    "file": "docs/research/domain-generality.md",
+    "from": "### 2.2 What a \"misconception\" is in an ill-structured domain",
+    "to": "### 2.3"
+  },
+  "spine": [
+    "Historical claims are interpretations argued from evidence: a source is evidence of its author's view, situated in its time, purpose and audience, not a window onto what happened.",
+    "Change has several interacting causes, and the outcome was contingent: what happened was not inevitable.",
+    "Judge the past in its own context before judging it by today's values (and keep both judgments apart)."
+  ],
+  "simulator": {
+    "kind": "beliefs",
+    "module": "beliefs.mjs"
+  },
+  "sandboxEnv": {
+    "LUNA_PUBLISH_WARNING_REVIEWS": "provisional"
+  },
+  "sandboxEnvWhy": "Sandbox-only (approved by the user; the live app stays strict): a course whose validation reports have only warnings publishes as provisional, with the warnings kept on the manifest's unresolvedIssues."
+}

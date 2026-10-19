@@ -1,0 +1,21 @@
+/* A function graph (Graph.jsx): the plot on the sheet like the course charts; under it a slim lapis slider per live
+   parameter (as the formula's), a held one dashed and still until the learner has predicted. */
+/* 16 Oct, the user: "prevent scrolling elements": the plot scales down under its 240px floor instead of scrolling. */
+.element-graph{margin:0;display:flex;flex-direction:column;gap:12px;max-width:100%}
+.element-graph svg{display:block;overflow:visible;max-width:100%;height:auto}
+.graph-params{display:flex;flex-direction:column;gap:6px;max-width:36rem}
+.graph-param{display:flex;align-items:center;gap:14px;min-height:30px;padding:0 6px;border-radius:6px}
+.graph-param.is-held{outline:1.5px dashed var(--accent);outline-offset:1px}
+.graph-name{flex:0 0 auto;min-width:5.5em;font:500 13px/1.3 var(--sans);color:var(--muted)}
+.graph-fixed{flex:1}
+.graph-value{flex:0 0 auto;min-width:3.5em;text-align:right;font:15px/1.4 var(--mono);color:var(--ink);font-variant-numeric:tabular-nums}
+.graph-param input[type=range]{flex:1;min-width:80px;-webkit-appearance:none;appearance:none;height:24px;margin:0;padding:0;cursor:pointer;background:
+  linear-gradient(var(--accent),var(--accent)) 0 50%/var(--at,0%) 2px no-repeat,linear-gradient(var(--line),var(--line)) 0 50%/100% 2px no-repeat}
+.graph-param input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:14px;height:14px;border:2px solid #fff;border-radius:50%;background:var(--accent)}
+.graph-param input[type=range]::-moz-range-thumb{width:10px;height:10px;border:2px solid #fff;border-radius:50%;background:var(--accent)}
+.graph-param input[type=range]::-moz-range-track,.graph-param input[type=range]::-moz-range-progress{background:none}
+.graph-param input[type=range]:focus{outline:none}
+.graph-param input[type=range]:focus-visible::-webkit-slider-thumb{outline:2px solid rgba(47,79,138,.35);outline-offset:1px}
+.graph-param input[type=range]:focus-visible::-moz-range-thumb{outline:2px solid rgba(47,79,138,.35);outline-offset:1px}
+.graph-param input[type=range]:disabled{cursor:not-allowed;opacity:.55}
+@media(max-width:420px){.graph-param{flex-wrap:wrap;gap:2px 12px}.graph-name{flex-basis:100%}}

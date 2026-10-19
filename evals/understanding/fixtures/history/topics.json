@@ -1,0 +1,46 @@
+{
+  "examId": "exam_27bHK3MyYitCeZLw",
+  "why": "Frozen 2026-10-08 by hand from the published course (study's sandbox): the topics the Study agent builds first, the topics the fixture's belief library teaches (beliefs.mjs concepts carry the same topicIds), and a spread over the rest of the course; parent topics where the course nests the idea's leaves under them (the Study builds at that level). Change it only with a new file (--topics).",
+  "topics": [
+    {
+      "topicId": "top_hUPPbi4ve9GkobWr",
+      "title": "Black Codes",
+      "unit": "Reconstruction"
+    },
+    {
+      "topicId": "top_5veHqgsFtdm8HJ8w",
+      "title": "Mississippi Black Code, 1865",
+      "unit": "Black Codes"
+    },
+    {
+      "topicId": "top_BK1dkoRSGFz09gBM",
+      "title": "Jourdon Anderson Writes His Former Enslaver, 1865",
+      "unit": "The Meaning of Black Freedom"
+    },
+    {
+      "topicId": "top_TAif2vOqmQt4YuL5",
+      "title": "The Meaning of Black Freedom",
+      "unit": "Reconstruction"
+    },
+    {
+      "topicId": "top_y38F5nOCzWZig2-t",
+      "title": "Field Order 15",
+      "unit": "Land redistribution and economic independence"
+    },
+    {
+      "topicId": "top_KOSWnq98zT-2fLx0",
+      "title": "Reconstruction’s uneven ending and political reversal",
+      "unit": "Reconstruction"
+    },
+    {
+      "topicId": "top_8qX7fqWcFs95TP1K",
+      "title": "Lawlessness in Texas during Reconstruction",
+      "unit": "Racial Violence in Reconstruction"
+    },
+    {
+      "topicId": "top_0P_ykrhJMArzFu_2",
+      "title": "Historical memory",
+      "unit": "Reconstruction"
+    }
+  ]
+}

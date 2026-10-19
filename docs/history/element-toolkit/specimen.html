@@ -1,0 +1,251 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Study — element toolkit specimen</title>
+<style>
+  :root{color-scheme:light;--ink:#1d1b18;--muted:#68635c;--lapis:#2f4f8a;--line:#ddd9d2;--control-line:#8a857c;--wash:#f3f5f9;--sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;--serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;--mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace}
+  *{box-sizing:border-box}
+  body{margin:0;background:#fff;color:var(--ink);font:18px/1.6 var(--serif)}
+  button,input,select,textarea{font:inherit;color:inherit;accent-color:var(--lapis)}
+  button,select,input[type=number],input[type=text],textarea{border:1px solid var(--control-line);border-radius:7px;background:#fff}
+  button,select{cursor:pointer}
+  button{min-height:44px;padding:9px 16px;font:500 14px/1.4 var(--sans)}
+  button:hover{background:var(--wash);border-color:var(--lapis)}
+  button:disabled{color:var(--muted);cursor:default;background:#f7f6f4}
+  :focus-visible{outline:2px solid var(--lapis);outline-offset:4px}
+  input[type=number],input[type=text],textarea{width:100%;min-width:0;padding:10px 12px;font-size:18px;line-height:1.5}
+  textarea{resize:vertical;min-height:100px}
+  input[type=radio],input[type=checkbox]{width:18px;height:18px;flex:0 0 18px;margin:3px 0 0}
+  input[type=range]{display:block;width:100%;min-height:44px;margin:0}
+  h1,h2,p,figure,pre,fieldset,ol{margin:0}
+  h1{font:400 clamp(25px,3.3vw,31px)/1.3 var(--serif);text-wrap:pretty}
+  p,li,figcaption,label,legend,h1,h2,th,td{overflow-wrap:anywhere}
+  a{color:var(--lapis)}
+  .masthead{max-width:1104px;margin:auto;padding:30px 28px 24px;display:flex;gap:16px;justify-content:space-between;align-items:baseline;font:500 13px/1.5 var(--sans)}
+  .brand{font-size:15px;letter-spacing:.03em}.masthead-note{color:var(--muted)}
+  .lab{max-width:960px;padding:0 28px 56px;margin:auto}
+  .toolbar{display:grid;grid-template-columns:minmax(0,1fr) auto;gap:12px 24px;align-items:end;border-bottom:1px solid var(--line);padding:0 0 24px}
+  .toolbar label{display:block;color:var(--muted);font:500 12px/1.5 var(--sans);margin-bottom:8px}
+  select{width:100%;min-width:0;min-height:44px;padding:10px 36px 10px 12px;font:14px/1.4 var(--sans);text-overflow:ellipsis}
+  .counter{color:var(--muted);font:14px/1.5 var(--sans);padding-bottom:12px;white-space:nowrap;font-variant-numeric:tabular-nums}
+  .scene{container:scene / inline-size;max-width:840px;margin:0 auto;padding:40px 20px 0;display:flex;flex-direction:column;gap:30px}
+  .prompt{display:flex;flex-direction:column;gap:14px}
+  .eyebrow,.part-title{color:var(--lapis);font:600 11px/1.5 var(--sans);letter-spacing:.1em;text-transform:uppercase}
+  .intro{max-width:66ch}
+  .body{display:flex;flex-direction:column;gap:24px;min-width:0}
+  .pair{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,290px),1fr));gap:28px;align-items:start;min-width:0}
+  .piece{display:flex;flex-direction:column;gap:12px;min-width:0;container:piece / inline-size}
+  .part-title{color:var(--muted)}
+  .caption{color:var(--muted);font:italic 16px/1.45 var(--serif)}
+  .small{font:14px/1.5 var(--sans);color:var(--muted)}
+  .scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain;scrollbar-gutter:stable;padding-bottom:8px}
+  .scroll:focus-visible{outline-offset:2px}
+  pre{font:14px/1.7 var(--mono);white-space:pre;tab-size:2}
+  .code{border-top:1px solid var(--line);border-bottom:1px solid var(--line);padding:12px 0}
+  .code-line{display:block;padding:1px 12px;min-width:max-content}
+  .code-line.active{background:var(--wash);box-shadow:inset 3px 0 var(--lapis)}
+  .line-number{display:inline-block;width:25px;margin-right:12px;color:var(--muted);user-select:none}
+  .controls{display:flex;flex-wrap:wrap;align-items:center;gap:12px}
+  .trace-status{font:14px/1.5 var(--sans);color:var(--muted);min-width:0}
+  .chain{display:flex;align-items:center;gap:10px;min-width:0}
+  .node{min-width:0;flex:1;border:1px solid var(--control-line);border-radius:6px;padding:12px;text-align:center;font:15px/1.5 var(--sans)}
+  .node b{display:block;font-weight:500;font-size:21px;line-height:1.5}
+  .node.is-current{border:2px solid var(--lapis);padding:11px;background:var(--wash)}
+  .connector{flex:none;color:var(--lapis);font:22px/1 var(--sans)}
+  .pathway .node{text-align:left}
+  .pathway .node b{font-size:16px;margin-bottom:4px}
+  .pathway .node span{font-size:14px;color:var(--muted)}
+  .reaction{display:flex;flex-wrap:wrap;justify-content:center;align-items:center;gap:14px 24px;padding:24px 0;font-size:27px;line-height:1.5}
+  .reaction span{white-space:nowrap}
+  .given{display:flex;flex-wrap:wrap;gap:14px 28px;font-size:18px}
+  .given div{min-width:0;flex:1 1 140px}
+  .given dt{font:13px/1.5 var(--sans);color:var(--muted);margin-bottom:4px}
+  .given dd{margin:0;font-variant-numeric:tabular-nums}
+  dl{margin:0}
+  .math-row{display:flex;align-items:center;flex-wrap:wrap;gap:20px 32px;padding:18px 0;font-size:23px}
+  .math-unit{display:flex;align-items:center;gap:12px;white-space:nowrap}
+  .matrix{border-left:2px solid var(--ink);border-right:2px solid var(--ink);display:grid;grid-template-columns:repeat(2,38px);gap:12px 18px;padding:8px 12px;text-align:center;font-variant-numeric:tabular-nums}
+  .matrix.vector{grid-template-columns:38px}
+  .math-hint{font-size:17px}
+  .diagram{container:diagram / inline-size;min-width:0;display:flex;flex-direction:column;gap:12px}
+  svg{display:block;margin:0 auto;flex:none;max-width:none;color:var(--ink);font:16px var(--sans)}
+  svg .axis{stroke:var(--muted);stroke-width:1.2;fill:none}
+  svg .guide{stroke:#e5e2dc;stroke-width:1;fill:none}
+  svg .line{stroke:var(--ink);stroke-width:1.7;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  svg .accent{stroke:var(--lapis);stroke-width:2.4;fill:none;stroke-linecap:round;stroke-linejoin:round}
+  svg .mark{fill:var(--lapis)}
+  svg text{fill:var(--ink)}
+  .figure-fallback{display:none}
+  .diagram.needs-fallback>svg{display:none}
+  .diagram.needs-fallback>.figure-fallback{display:block}
+  table{border-collapse:collapse;width:100%;font:15px/1.5 var(--sans);font-variant-numeric:tabular-nums}
+  caption{text-align:left;margin-bottom:10px;color:var(--muted);font:14px/1.5 var(--sans)}
+  th,td{padding:10px 12px;border-bottom:1px solid var(--line);text-align:right;vertical-align:top}
+  th:first-child,td:first-child{text-align:left}
+  th{font-weight:500;color:var(--muted)}
+  .wide-table{min-width:820px}
+  .wide-table th:first-child{min-width:130px}
+  .wide-table caption{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap}
+  .wide-table th{min-width:90px;max-width:160px}
+  .response-fields{display:flex;flex-direction:column;gap:12px}
+  .response{border-top:1px solid var(--line);padding-top:24px;display:flex;flex-direction:column;gap:18px}
+  fieldset{padding:0;border:0;min-width:0}
+  legend,.answer-label{display:block;padding:0;margin-bottom:12px;font-size:18px}
+  .choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,210px),1fr));gap:10px}
+  .choice{display:flex;align-items:start;gap:12px;border:1px solid var(--control-line);border-radius:7px;min-height:48px;padding:12px 14px;font-size:17px;line-height:1.45;cursor:pointer;min-width:0}
+  .choice:has(input:checked){border-color:var(--lapis);background:var(--wash)}
+  .number-answer{display:flex;align-items:center;gap:12px;max-width:300px;font:16px/1.5 var(--sans)}
+  .number-answer input{max-width:190px}
+  .save-row{display:flex;align-items:center;flex-wrap:wrap;gap:12px 20px}
+  .save{color:var(--lapis);border-color:var(--control-line)}
+  .notice{font:13px/1.5 var(--sans);color:var(--muted);flex:1 1 220px}
+  .footer{max-width:800px;margin:32px auto 0;padding:0 20px;font:12px/1.5 var(--sans);color:var(--muted)}
+  .range-label{display:flex;gap:12px;justify-content:space-between;align-items:baseline;font:15px/1.5 var(--sans)}
+  output{font-variant-numeric:tabular-nums;color:var(--lapis)}
+  @container piece (max-width:380px){.chain{flex-direction:column;align-items:stretch}.connector{text-align:center;transform:rotate(90deg);height:24px}.node{width:100%}}
+  @container diagram (max-width:479px){.plot-wide{display:none}.plot-fallback{display:block}}
+  @container diagram (max-width:359px){.circuit-wide{display:none}.circuit-fallback{display:block}}
+  @container diagram (max-width:279px){.force-wide{display:none}.force-fallback{display:block}}
+  @media(max-width:600px){.masthead{padding:20px 18px}.masthead-note{display:none}.lab{padding:0 18px 32px}.toolbar{gap:12px}.scene{padding:28px 0 0;gap:26px}.counter{font-size:12px}.footer{padding:0}.reaction{font-size:23px}th,td{padding:9px 8px}}
+  @media(prefers-reduced-motion:reduce){*{scroll-behavior:auto!important}}
+</style>
+</head>
+<body>
+<header class="masthead"><span class="brand">Study <span class="masthead-note">/ Element toolkit</span></span><span class="masthead-note">One question. Many ways to think.</span></header>
+<main class="lab">
+  <div class="toolbar">
+    <div><label for="specimen-picker">Explore a composition</label><select id="specimen-picker"></select></div>
+    <span class="counter" id="counter"></span>
+  </div>
+  <article class="scene" aria-labelledby="question-title" id="scene"></article>
+  <p class="footer">Design specimen — illustrative controls; no tutoring or grading connected.</p>
+</main>
+<script>
+/* Isolated specification specimen. All markup below is authored here; no model or user HTML is inserted. */
+const choices = (legend, items) => `<fieldset><legend>${legend}</legend><div class="choices">${items.map((label,i)=>`<label class="choice"><input type="radio" name="answer" value="${i}" required><span>${label}</span></label>`).join('')}</div></fieldset>`;
+const explain = (label='Explain your reasoning.') => `<label class="answer-label" for="answer">${label}</label><textarea id="answer" name="answer" rows="3" required placeholder="Write your reasoning here…"></textarea>`;
+const number = (label, unit) => `<label class="answer-label" for="answer">${label}</label><div class="number-answer"><input id="answer" name="answer" type="number" step="any" required aria-describedby="unit"><span id="unit">${unit}</span></div>`;
+const table = (caption, headings, rows, cls='') => `<table class="${cls}"><caption>${caption}</caption><thead><tr>${headings.map(h=>`<th scope="col">${h}</th>`).join('')}</tr></thead><tbody>${rows.map(row=>`<tr>${row.map((v,i)=>i===0?`<th scope="row">${v}</th>`:`<td>${v}</td>`).join('')}</tr>`).join('')}</tbody></table>`;
+const code = lines => `<div class="scroll code" role="region" aria-label="Code sample, horizontally scrollable" tabindex="0"><pre><code>${lines.map((line,i)=>`<span class="code-line" data-line="${i}"><span class="line-number" aria-hidden="true">${i+1}</span>${line}</span>`).join('')}</code></pre></div>`;
+const piece = (title, markup) => `<section class="piece" data-check="block"><h2 class="part-title">${title}</h2>${markup}</section>`;
+const forceTable = table('Force diagram, text equivalent', ['Direction','Force'],[['Up','Normal force N'],['Down','Weight mg'],['Right','Applied force 12 N'],['Left','Friction 4 N']]);
+const earthRows = [['0','0.0'],['10','0.2'],['20','0.1'],['30','0.5'],['40','0.6'],['50','0.9']];
+const plotRows = [['−2','4'],['−1','1'],['0','0'],['1','1'],['2','4']];
+window.specimens = [
+  {
+    name:'Computer science · linked list', topic:'Computer science · tracing', title:'Explain how a pointer reaches the end.',
+    prompt:'Explore the function and advance the trace to inspect the loop state. Then explain why the loop stops where it does. This is a worked exploration, so the trace is available before you respond.',
+    body:`<div class="pair">${piece('Python',code(['def last_value(head):','  node = head','  while node.next is not None:','    node = node.next','  return node.value']))}${piece('List structure',`<div class="chain" role="img" aria-label="Head points to node A with value 8, followed by node B with value 3, followed by node C with value 11. Node C points to None."><div class="node is-current" data-node="0">A<b>8</b></div><span class="connector" aria-hidden="true">→</span><div class="node" data-node="1">B<b>3</b></div><span class="connector" aria-hidden="true">→</span><div class="node" data-node="2">C<b>11</b></div></div><p class="caption">Head → A. The last node’s next pointer is None.</p><div class="controls"><button type="button" id="trace-next">Advance trace</button><button type="button" id="trace-reset">Reset</button></div><p class="trace-status" id="trace-state" role="status">State 1 of 3 · node points to A.</p>`)}</div>`,
+    response:explain('Why does the loop stop at the final node rather than advance to None?'),
+    mount(){let step=0;const render=()=>{document.querySelectorAll('[data-node]').forEach((n,i)=>n.classList.toggle('is-current',i===step));document.querySelectorAll('[data-line]').forEach((n,i)=>n.classList.toggle('active',i===(step===2?4:2)));document.getElementById('trace-state').textContent=`State ${step+1} of 3 · node points to ${['A','B','C'][step]}.`;document.getElementById('trace-next').disabled=step===2;};document.getElementById('trace-next').onclick=()=>{step=Math.min(2,step+1);render();};document.getElementById('trace-reset').onclick=()=>{step=0;render();};render();}
+  },
+  {
+    name:'Calculus · explore a curve', topic:'Calculus · rate of change', title:'Where does the curve change most quickly?',
+    prompt:'Explore f(x) = x² by moving the point along the curve. Compare the rate of change at x = −1, x = 0, and x = 2. Compare signed slopes: which is most positive? Distinguish this from comparing the magnitude of change.',
+    body:piece('Function and sample point',`<figure class="diagram"><svg class="plot-wide" width="480" height="270" viewBox="0 0 480 270" role="img" aria-labelledby="curve-title curve-desc"><title id="curve-title">Graph of f(x) = x squared</title><desc id="curve-desc">The horizontal axis is x from −2 to 2. The vertical axis is f(x) from 0 to 4. The curve passes through (−2,4), (−1,1), (0,0), (1,1), (2,4). The current point is also given below.</desc><path class="guide" d="M60 40H420 M60 130H420"/><path class="axis" d="M50 220H435 M240 230V24"/><path class="accent" d="M60 40 Q240 400 420 40"/><circle id="curve-point" class="mark" cx="330" cy="175" r="6"/><g text-anchor="middle"><text data-check="label" x="60" y="247">−2</text><text data-check="label" x="150" y="247">−1</text><text data-check="label" x="240" y="247">0</text><text data-check="label" x="330" y="247">1</text><text data-check="label" x="420" y="247">2</text></g><text data-check="label" x="27" y="46">4</text><text data-check="label" x="27" y="136">2</text><text data-check="label" x="447" y="225">x</text><text data-check="label" x="256" y="25">f(x)</text></svg><div class="figure-fallback plot-fallback">${table('f(x) = x² · values from the curve',['x','f(x)'],plotRows)}</div><div><label class="range-label" for="curve-x"><span>Move the point · x</span><output id="curve-output" for="curve-x">1.0 → f(x) = 1.00</output></label><input id="curve-x" type="range" min="-2" max="2" step="0.1" value="1"></div><figcaption class="caption">Both axes are linear and use distinct scales. On a narrow screen, the plot becomes a table of the same sample values.</figcaption></figure>`),
+    response:explain('Compare the three rates of change.'),
+    mount(){document.getElementById('curve-x').oninput=e=>{const x=Number(e.target.value);document.getElementById('curve-point').setAttribute('cx',240+90*x);document.getElementById('curve-point').setAttribute('cy',220-45*x*x);document.getElementById('curve-output').textContent=`${x.toFixed(1)} → f(x) = ${(x*x).toFixed(2)}`;};}
+  },
+  {
+    name:'Linear algebra · matrix transformation', topic:'Linear algebra · transformations', title:'Apply a transformation to a vector.',
+    prompt:'A transforms column vectors in the plane. Find Av, then describe what this transformation does to the horizontal and vertical components.',
+    body:piece('Given transformation',`<div class="math-row" role="img" aria-label="A is a 2 by 2 matrix with rows 2, 1 and 0, 1. Vector v has entries 1 and 2."><div class="math-unit"><i>A</i> = <div class="matrix" aria-hidden="true"><span>2</span><span>1</span><span>0</span><span>1</span></div></div><div class="math-unit"><i>v</i> = <div class="matrix vector" aria-hidden="true"><span>1</span><span>2</span></div></div></div><p class="caption">Read each matrix row against the column vector.</p>`),
+    response:`<fieldset><legend>Enter the transformed vector.</legend><div class="pair"><label class="answer-label" for="component-x">Horizontal component<input id="component-x" name="x" type="number" step="any" required></label><label class="answer-label" for="component-y">Vertical component<input id="component-y" name="y" type="number" step="any" required></label></div></fieldset>${explain('Describe the transformation in words.')}`
+  },
+  {
+    name:'Physics · free-body diagram', topic:'Physics · Newton’s laws', title:'Use the forces to predict the motion.',
+    prompt:'A 2 kg block rests on a horizontal surface. A 12 N force pulls it right while friction exerts 4 N left. The vertical forces balance. Find the horizontal acceleration.',
+    body:piece('Forces on the block',`<figure class="diagram"><svg class="force-wide" width="280" height="248" viewBox="0 0 280 248" role="img" aria-labelledby="force-title force-desc"><title id="force-title">Free-body diagram</title><desc id="force-desc">A block has a normal force upward, weight downward, an applied force of 12 newtons right, and friction of 4 newtons left. Arrow lengths are schematic.</desc><rect x="112" y="96" width="56" height="56" rx="4" fill="#f3f5f9" stroke="#8a857c"/><path class="accent" d="M140 96V36 M133 44L140 36L147 44 M140 152V214 M133 206L140 214L147 206 M168 124H246 M238 117L246 124L238 131 M112 124H42 M50 117L42 124L50 131"/><text data-check="label" x="154" y="48">N</text><text data-check="label" x="154" y="216">mg</text><text data-check="label" x="200" y="103">12 N</text><text data-check="label" x="39" y="103">4 N</text></svg><div class="figure-fallback force-fallback">${forceTable}</div><figcaption class="caption">Arrows show directions; their lengths are schematic.</figcaption></figure>`),
+    response:number('Horizontal acceleration, taking right as positive','m/s²')
+  },
+  {
+    name:'Electrical engineering · circuit', topic:'Circuits · current paths', title:'What changes when the switch closes?',
+    prompt:'An ideal 6 V source is connected in series with a 3 Ω resistor and a switch. Compare the circuit in its open and closed states, then explain what happens to the current.',
+    body:piece('Series circuit',`<figure class="diagram"><svg class="circuit-wide" width="360" height="208" viewBox="0 0 360 208" role="img" aria-labelledby="circuit-title circuit-desc"><title id="circuit-title">A source, resistor, and switch in series</title><desc id="circuit-desc">A 6 volt ideal source, a 3 ohm resistor, and a switch form one series loop. The switch state is stated below.</desc><path class="line" d="M50 82V46H127 M167 46H240 M292 46H320V166H50V116 M30 82H70 M37 116H63"/><path class="line" d="M240 46l5 -10 8 20 8 -20 8 20 8 -20 8 20 7 -10"/><circle cx="127" cy="46" r="3" fill="#1d1b18"/><circle cx="167" cy="46" r="3" fill="#1d1b18"/><path id="switch-arm" class="accent" d="M127 46L163 25"/><text data-check="label" x="75" y="104">6 V</text><text data-check="label" x="246" y="89">3 Ω</text><text data-check="label" x="115" y="89">Switch</text></svg><div class="figure-fallback circuit-fallback">${table('Series loop connections',['Order','Component'],[['1','Ideal source · 6 V'],['2','Switch'],['3','Resistor · 3 Ω'],['4','Return to source']])}</div><div class="controls"><button type="button" id="circuit-toggle" aria-pressed="false">Close switch</button><span id="circuit-state" class="trace-status" role="status">Switch is open.</span></div><figcaption class="caption">Ideal wires and components. The button changes the circuit state.</figcaption></figure>`),
+    response:explain('Explain the current in each state.'),
+    mount(){let closed=false;document.getElementById('circuit-toggle').onclick=e=>{closed=!closed;document.getElementById('switch-arm').setAttribute('d',closed?'M127 46H167':'M127 46L163 25');e.target.setAttribute('aria-pressed',String(closed));e.target.textContent=closed?'Open switch':'Close switch';document.getElementById('circuit-state').textContent=`Switch is ${closed?'closed':'open'}.`;};}
+  },
+  {
+    name:'Chemistry · stoichiometry', topic:'Chemistry · reaction quantities', title:'Which reactant runs out first?',
+    prompt:'Hydrogen and oxygen react to form water. The mixture initially contains 3.0 mol H₂ and 2.0 mol O₂. Use the balanced equation to identify the limiting reactant and support your choice.',
+    body:piece('Balanced reaction',`<div class="reaction" role="img" aria-label="2 H2 plus O2 yields 2 H2O"><span>2 H₂</span><span aria-hidden="true">+</span><span>O₂</span><span aria-hidden="true">→</span><span>2 H₂O</span></div><dl class="given"><div><dt>Initial hydrogen</dt><dd>3.0 mol H₂</dd></div><div><dt>Initial oxygen</dt><dd>2.0 mol O₂</dd></div></dl>`),
+    response:`${choices('Select the limiting reactant.',['Hydrogen · H₂','Oxygen · O₂','Neither reactant'])}${explain('Show the mole comparison you used.')}`
+  },
+  {
+    name:'Biology · pathway and inhibition', topic:'Biology · metabolic pathways', title:'Predict what happens upstream of a block.',
+    prompt:'In this simplified pathway, enzyme E₁ converts A to B and enzyme E₂ converts B to C. A selective inhibitor reduces E₂ activity. Assume the supply of A and activity of E₁ stay constant over the short observation period.',
+    body:piece('Reaction sequence',`<div class="chain pathway" role="img" aria-label="A is converted by E1 to B, then B is converted by E2 to C. E2 is inhibited."><div class="node"><b>Substrate A</b><span>Continuous supply</span></div><span class="connector" aria-hidden="true">→</span><div class="node"><b>Intermediate B</b><span>Made by E₁</span></div><span class="connector" aria-hidden="true">→</span><div class="node"><b>Product C</b><span>Made by E₂</span></div></div><p class="caption">Inhibitor acts on E₂, the second reaction.</p>`),
+    response:`${choices('Which change would you expect in B?',['B increases','B decreases','B stays constant'])}${explain('Explain your prediction using the pathway.')}`
+  },
+  {
+    name:'Statistics · compare samples', topic:'Statistics · center and spread', title:'Do these samples tell the same story?',
+    prompt:'Two groups completed the same task. Compare their typical completion time and variability. Use at least one numerical summary for each group.',
+    body:piece('Observed completion times',table('Time in minutes · independent samples',['Observation','Group A','Group B'],[['1','8','4'],['2','9','7'],['3','10','10'],['4','10','10'],['5','11','13'],['6','12','16']])),
+    response:explain('Compare the groups and support your claim.')
+  },
+  {
+    name:'Earth science · time series', topic:'Earth science · interpreting data', title:'Separate a trend from a short-term fluctuation.',
+    prompt:'The graph shows a simplified temperature-anomaly series. Describe the overall pattern and one interval that differs from that pattern. Use values from the data in your explanation.',
+    body:piece('Temperature anomaly',`<figure class="diagram"><svg class="plot-wide" width="480" height="266" viewBox="0 0 480 266" role="img" aria-labelledby="earth-title earth-desc"><title id="earth-title">Temperature anomaly over 50 years</title><desc id="earth-desc">Synthetic data: year zero, zero degrees Celsius; year 10, 0.2; year 20, 0.1; year 30, 0.5; year 40, 0.6; year 50, 0.9. Horizontal spacing is 10 years; vertical spacing is in degrees Celsius.</desc><path class="guide" d="M65 52H425 M65 124H425"/><path class="axis" d="M65 30V196H432"/><path class="accent" d="M65 196L137 164L209 180L281 116L353 100L425 52"/><g class="mark"><circle cx="65" cy="196" r="4"/><circle cx="137" cy="164" r="4"/><circle cx="209" cy="180" r="4"/><circle cx="281" cy="116" r="4"/><circle cx="353" cy="100" r="4"/><circle cx="425" cy="52" r="4"/></g><g text-anchor="middle"><text data-check="label" x="65" y="220">0</text><text data-check="label" x="137" y="220">10</text><text data-check="label" x="209" y="220">20</text><text data-check="label" x="281" y="220">30</text><text data-check="label" x="353" y="220">40</text><text data-check="label" x="425" y="220">50</text></g><g text-anchor="end"><text data-check="label" x="51" y="202">0.0</text><text data-check="label" x="51" y="130">0.45</text><text data-check="label" x="51" y="58">0.9</text></g><text data-check="label" x="66" y="20">Anomaly (°C)</text><text data-check="label" x="180" y="252">Years from baseline</text></svg><div class="figure-fallback plot-fallback">${table('Synthetic temperature-anomaly series',['Year','Anomaly (°C)'],earthRows)}</div><figcaption class="caption">Synthetic data for interpreting a graph; not a real climate record.</figcaption></figure>`),
+    response:explain('Describe the trend and the exception.')
+  },
+  {
+    name:'Stress case · long scientific labels', topic:'Ecology · long-label composition', title:'Follow energy through a food chain.',
+    prompt:'Explain how a reduction in the first population could affect the third. State one assumption you would need to make about other food sources in the ecosystem.',
+    body:piece('Simplified food chain',`<div class="chain pathway" role="img" aria-label="Photosynthetic freshwater phytoplankton are consumed by herbivorous zooplankton, which are consumed by juvenile planktivorous fish."><div class="node"><b>Photosynthetic freshwater phytoplankton</b><span>Primary producers</span></div><span class="connector" aria-hidden="true">→</span><div class="node"><b>Herbivorous freshwater zooplankton</b><span>Primary consumers</span></div><span class="connector" aria-hidden="true">→</span><div class="node"><b>Juvenile planktivorous fish</b><span>Secondary consumers</span></div></div><p class="caption">Arrows indicate transfer of energy from food to consumer. Full names remain visible.</p>`),
+    response:explain('Predict the effect and state your assumption.')
+  },
+  {
+    name:'Stress case · long code signature', topic:'Computer science · reading interfaces', title:'Read the signature before choosing a strategy.',
+    prompt:'The function returns the shortest travel time between two stations. All connection weights are nonnegative. The contract requires null when the destination cannot be reached. Identify an appropriate graph algorithm and explain how you would detect the unreachable case.',
+    body:piece('TypeScript interface',`${code(['type StationId = string;','type Connection = { to: StationId; minutes: number };','','function shortestTravelTime(connectionsByStation: ReadonlyMap&lt;StationId, ReadonlyArray&lt;Connection&gt;&gt;, originStation: StationId, destinationStation: StationId): number | null {','  // Your implementation goes here.','}'])}<p class="caption">Code preserves its exact structure. Scroll within the code region to read the complete signature.</p>`),
+    response:explain('Name your algorithm and describe the unreachable case.')
+  },
+  {
+    name:'Stress case · wide laboratory table', topic:'Environmental science · wide data', title:'Choose a fair comparison from the measurements.',
+    prompt:'These synthetic stream measurements were collected at three sites on two dates. Choose a comparison that keeps site fixed while examining change over time. Explain why your comparison addresses that question.',
+    body:piece('Field measurements',`<p class="small">Synthetic data · units appear in column headings.</p><div class="scroll" role="region" aria-label="Field measurements, eight-column table, horizontally scrollable" tabindex="0">${table('Synthetic data · units appear in column headings',['Site','Day','Temperature (°C)','Dissolved oxygen (mg/L)','pH','Conductivity (µS/cm)','Turbidity (NTU)','Nitrate (mg/L)'],[['Upstream','1','12.4','9.8','7.1','148','2.0','0.4'],['Upstream','8','13.0','9.5','7.0','151','2.3','0.5'],['Midstream','1','13.8','8.7','7.2','203','4.7','1.1'],['Midstream','8','14.1','8.4','7.1','217','6.1','1.4'],['Downstream','1','14.6','8.0','7.3','246','7.2','1.8'],['Downstream','8','15.0','7.7','7.2','260','8.4','2.1']],'wide-table')}</div><p class="caption">The table keeps its columns aligned. Scroll within the table to inspect all measurements.</p>`),
+    response:explain('Identify two rows to compare and explain your choice.')
+  }
+];
+let diagramObserver;
+function fitDiagramLabels(){
+  document.querySelectorAll('.diagram').forEach(figure=>{
+    const svg=figure.querySelector('svg');
+    if(!svg?.getClientRects().length) return;
+    const frame=svg.getBoundingClientRect();
+    const labels=[...svg.querySelectorAll('[data-check="label"]')];
+    const boxes=labels.map(label=>label.getBoundingClientRect());
+    const bad=labels.some((label,i)=>{
+      const size=parseFloat(getComputedStyle(label).fontSize),a=boxes[i];
+      if(size<14||size>20||a.left<frame.left||a.right>frame.right||a.top<frame.top||a.bottom>frame.bottom) return true;
+      return boxes.some((b,j)=>j>i&&Math.min(a.right,b.right)+4>Math.max(a.left,b.left)&&Math.min(a.bottom,b.bottom)+4>Math.max(a.top,b.top));
+    });
+    // Retain the readable table if text enlargement makes labels unsafe.
+    if(bad) figure.classList.add('needs-fallback');
+  });
+}
+const picker=document.getElementById('specimen-picker');
+window.specimens.forEach((specimen,index)=>{const option=document.createElement('option');option.value=index;option.textContent=specimen.name;picker.append(option);});
+window.showSpecimen = function(index){
+  if(!Number.isInteger(index)||index<0||index>=window.specimens.length) throw new RangeError('Unknown specimen index');
+  diagramObserver?.disconnect();
+  const specimen=window.specimens[index];
+  const scene=document.getElementById('scene');
+  scene.innerHTML=`<header class="prompt" data-check="block"><p class="eyebrow">${specimen.topic}</p><h1 id="question-title">${specimen.title}</h1><p class="intro">${specimen.prompt}</p></header><div class="body" data-check="block">${specimen.body}</div><form class="response" data-check="block"><div class="response-fields">${specimen.response}</div><div class="save-row"><button class="save" type="submit">Keep response</button><p class="notice" role="status" id="response-status">Your response stays in this preview until you change examples.</p></div></form>`;
+  scene.dataset.specimen=String(index);
+  scene.querySelector('form').onsubmit=e=>{e.preventDefault();document.getElementById('response-status').textContent='Response recorded in this preview. No grading connected.';};
+  picker.value=String(index);
+  document.getElementById('counter').textContent=`${String(index+1).padStart(2,'0')} / ${window.specimens.length}`;
+  specimen.mount?.();
+  diagramObserver=new ResizeObserver(fitDiagramLabels);
+  scene.querySelectorAll('svg,svg [data-check="label"]').forEach(element=>diagramObserver.observe(element));
+  requestAnimationFrame(fitDiagramLabels);
+};
+picker.onchange=()=>window.showSpecimen(Number(picker.value));
+window.showSpecimen(0);
+</script>
+</body>
+</html>

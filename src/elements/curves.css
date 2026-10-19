@@ -1,0 +1,17 @@
+/* Supply and demand (Curves.jsx): the axes and ticks are sim.css's; demand in lapis, supply in terracotta, the
+   equilibrium in ink with dashed guides, a tax's wedge in gold, and the surpluses as faint fills. */
+.element-curves{margin:0;display:flex;flex-direction:column;gap:12px;max-width:100%}
+.curves-line path{fill:none;stroke-width:2.2;stroke-linecap:round}
+.curves-line text{font-size:12px;font-weight:600}
+.curves-line.is-demand path{stroke:var(--accent)}.curves-line.is-demand text{fill:var(--accent)}
+.curves-line.is-supply path{stroke:var(--warm)}.curves-line.is-supply text{fill:var(--warm)}
+.curves-guide{fill:none;stroke:var(--muted);stroke-width:1;stroke-dasharray:3 3}
+.curves-eq circle{fill:var(--ink);stroke:var(--paper);stroke-width:2}
+.curves-eq.is-asked circle{fill:var(--paper);stroke:var(--accent);stroke-width:2;stroke-dasharray:2 2}
+.curves-wedge path{stroke:#bfa035;stroke-width:3;stroke-linecap:round}
+.curves-wedge circle{fill:#bfa035;stroke:var(--paper);stroke-width:2}
+.curves-areas polygon{stroke:none}
+.curves-areas .is-cs{fill:var(--accent);fill-opacity:.1}
+.curves-areas .is-ps{fill:var(--good);fill-opacity:.12}
+.curves-areas .is-tax{fill:#bfa035;fill-opacity:.14}
+.curves-areas .is-dwl{fill:var(--warm);fill-opacity:.22}

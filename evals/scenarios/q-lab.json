@@ -1,0 +1,3 @@
+{ "title": "Q: didn't get the lab", "examId": "exam_ePD4rfaawGtJHXw9", "intro": true,
+  "persona": "CS 3410 student, Prelim 1 Thursday. You didn't really get Lab 5 (translating C loops and if/else into RISC-V). Ask Plato to go through what that lab wanted you to learn, then try translating a small loop yourself (get the branch condition backwards once). You like seeing code on the page.",
+  "lines": ["can you go over lab 5 with me? I didn't really get the loop translation part"] }

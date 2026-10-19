@@ -1,0 +1,108 @@
+/* What Plato said (ConversationLog.jsx): a minimal panel of his finished lines, newest last, in the page's serif. Under
+   the sphere at rest; under the page's stone frame while the page is up on a narrow screen; on a wide screen, the column
+   beside the page. It scrolls back (held at the newest), earlier lines smaller and muted, the top fading into the white;
+   a quiet × closes it and a round button at the top right brings it back. The line the student is typing waits at the
+   foot, in their writing's lapis and the plain sans of the controls, and rides above a phone's keyboard (--kb). */
+.conversation-log{position:absolute;z-index:12;left:50%;transform:translateX(-50%);box-sizing:border-box;text-align:center;transition:opacity .16s ease}
+.conversation-log p{margin:0;overflow-wrap:anywhere;text-wrap:pretty}
+.conversation-log.plato{top:calc(50% - var(--sphere-y,75px) + 178px);width:min(640px,calc(100vw - 48px));max-height:calc(50% + var(--sphere-y,75px) - 178px - 64px - var(--kb,0px));
+  display:flex;flex-direction:column;font:400 19px/1.5 var(--serif);color:var(--ink)}
+.log-replies{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;gap:12px;overflow-y:auto;overscroll-behavior:contain;scrollbar-width:thin;scrollbar-color:var(--line) transparent;
+  padding:1.4em 6px 2px;-webkit-mask-image:linear-gradient(transparent,#000 1.4em);mask-image:linear-gradient(transparent,#000 1.4em);cursor:text;outline:none}
+
+.log-earlier{font-size:.84em;color:var(--faint)}
+.log-close{position:absolute;top:-6px;right:-6px;z-index:1;opacity:0;transition:opacity .16s,background .16s}
+.conversation-log.plato:hover .log-close,.log-close:focus-visible{opacity:1}
+@media (hover:none){.log-close{opacity:1}}
+.log-open{position:fixed;top:var(--edge);right:var(--edge);z-index:30}
+/* With the page up, both stand in one column below the frame: Plato's panel above, the typed line at the foot. On a
+   narrow screen the column keeps clear of the round buttons in its corners. */
+.conversation{display:contents}
+.has-page .conversation{position:absolute;z-index:12;left:50%;transform:translateX(-50%);display:flex;flex-direction:column;justify-content:flex-end;gap:6px;
+  top:calc(100% - var(--page-bottom,172px) + var(--frame,30px) + 8px);bottom:calc(14px + var(--kb,0px));width:min(760px,calc(var(--page-w,680px) + 2 * var(--frame,30px)))}
+.has-page .conversation .conversation-log{position:relative;top:auto;bottom:auto;left:auto;transform:none;width:auto;max-height:none}
+.has-page .conversation-log.plato{flex:0 1 auto;min-height:0;font-size:17px}
+.has-page .conversation-log.mine{flex:0 0 auto;align-self:center;text-align:left;width:min(620px,calc(100% - 112px))}
+.conversation-log.is-quiet{opacity:0;pointer-events:none}
+.conversation-log.mine{bottom:calc(16px + var(--kb,0px));text-align:center;width:min(620px,calc(100vw - 140px));font:400 15px/1.5 var(--sans);color:var(--accent)}
+.conversation-log.mine:empty{pointer-events:none}
+.log-unit{margin-left:.35em;color:var(--faint)}
+.log-error{color:#986c59;font:400 13px/1.5 var(--sans)}
+.log-typing{white-space:pre-wrap;max-height:40vh;overflow-y:auto} /* pasted code keeps its lines */
+.log-typing .caret{display:inline-block;width:1.5px;height:1.05em;margin-left:2px;vertical-align:-3px;background:var(--accent);animation:caret 1s steps(1) infinite}
+@keyframes caret{50%{opacity:0}}
+@media (max-width:860px){.conversation-log.plato{font-size:17px}.has-page .conversation{width:calc(100vw - 24px);padding:0 52px}.has-page .conversation-log.plato{font-size:16px}
+  .has-page .conversation-log.mine{width:100%}.conversation-log.mine{width:calc(100vw - 132px)}}
+/* Wide screens with the page up (talk-screen.css): the panel is the column beside the page, from the top (below the
+   day's goals while they show) to the foot, read left-aligned like the page. */
+@media (min-width:900px){
+  .has-page .conversation{top:12px;left:var(--talk-left);width:min(640px,calc(100% - var(--talk-left) - 32px));transform:none;gap:14px}
+  .has-page:has(>.agenda-strip) .conversation{top:46px}
+  .has-page .conversation-log.plato{flex:1 1 auto;font-size:19px;text-align:left}
+  .has-page .log-replies{gap:18px;padding-top:72px;-webkit-mask-image:linear-gradient(transparent,#000 72px);mask-image:linear-gradient(transparent,#000 72px)}
+  .has-page .log-close{top:4px;right:0}
+  .has-page .conversation-log.mine{width:100%}
+}
+@media (prefers-reduced-motion:reduce){.conversation-log,.log-close{transition:none}.log-typing .caret,.log-open{animation:none}}
+/* Typing needs no box: the keys go to this unseen line, which the log shows at its foot. 16px keeps iOS from zooming. */
+.typer{position:fixed;left:0;bottom:0;width:1px;height:1px;opacity:0;border:0;padding:0;resize:none;pointer-events:none;font-size:16px}
+.sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip-path:inset(50%);white-space:nowrap;border:0}
+.log-typing .log-selected{background:color-mix(in srgb,var(--accent) 22%,transparent);color:inherit;border-radius:2px}
+.log-blocks .material{font:inherit;color:inherit}
+.log-blocks .material>*:first-child{margin-top:0}
+.log-blocks .material>*:last-child{margin-bottom:0}
+.log-blocks{margin:0 0 .9em}
+/* The text chat (ConversationLog chat mode): both sides in order, the thinking box, tool lines; nothing fades. */
+.conversation-log.plato.chat{text-align:left}
+.chat .log-replies{gap:10px}
+.chat-empty{color:var(--faint);font-size:.9em}
+.chat-me{align-self:flex-end;max-width:85%;background:var(--tint);border-radius:14px 14px 4px 14px;padding:8px 12px;font:400 15px/1.45 var(--sans);color:var(--ink);white-space:pre-wrap}
+.chat-plato{align-self:stretch;color:var(--ink)}
+.chat-plato .material{font:inherit;color:inherit}
+.chat-plato .material>*:first-child{margin-top:0}.chat-plato .material>*:last-child{margin-bottom:0}
+.chat-tool{font:400 13px/1.4 var(--sans);color:var(--muted);padding-left:2px}
+.chat-think{padding:2px 0;font:400 13px/1.45 var(--sans);color:var(--muted)}
+
+.chat-think-head{display:flex;align-items:center;gap:8px;font-weight:600;color:var(--ink-2)}
+.chat-think-text{margin-top:3px;font-style:italic;white-space:pre-wrap}
+.chat-spinner{width:12px;height:12px;border-radius:50%;border:2px solid var(--line);border-top-color:var(--accent);animation:chat-spin .8s linear infinite;flex:none}
+@keyframes chat-spin{to{transform:rotate(360deg)}}
+@media (prefers-reduced-motion:reduce){.chat-spinner{animation:none}}
+.chat-rec{width:10px;height:10px;border-radius:50%;background:#c4452c;flex:none;animation:chat-rec 1.2s ease-in-out infinite}
+@keyframes chat-rec{50%{opacity:.35}}
+.chat-hint{font-weight:400;color:var(--faint)}
+@media (prefers-reduced-motion:reduce){.chat-rec{animation:none}}
+/* How Plato is teaching (Faces.jsx): a round button in the left rail, in the colour of the face he is in, and its menu
+   opening to the right of it. Each face has a colour, also on the divider in the chat where he changed to it. */
+.face-lecture{--face:#2f4f8a}.face-coach{--face:#2f8a5c}.face-critic{--face:#b5653e}.face-exam{--face:#9b3b4a}.face-review{--face:#6b5ea8}
+.faces{position:relative}
+.face-button.is-set{background:var(--face);color:#fff;box-shadow:0 2px 0 color-mix(in srgb,var(--face) 70%,#000)}
+.face-button.is-set:hover{background:color-mix(in srgb,var(--face) 88%,#000)}
+.face-menu{position:absolute;left:calc(100% + 10px);bottom:0;z-index:40;width:280px;padding:6px;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 12px 36px rgba(40,30,10,.14);animation:page-in .15s ease-out both}
+.face-menu-head{margin:4px 8px 6px;font:400 12.5px/1.4 var(--sans);color:var(--muted)}
+.face-menu-head b{color:var(--face,var(--ink));font-weight:600}
+.face-menu button{display:flex;align-items:flex-start;gap:10px;width:100%;padding:8px 10px;border-radius:9px;text-align:left;color:var(--face)}
+.face-menu button:hover{background:var(--tint)}
+.face-menu button[aria-checked="true"]{background:color-mix(in srgb,var(--face) 10%,#fff)}
+.face-menu svg{flex:none;margin-top:1px}
+.face-menu span{display:flex;flex-direction:column;gap:1px}
+.face-menu b{font:600 13.5px/1.3 var(--sans);color:var(--ink)}
+.face-menu small{font:400 12.5px/1.35 var(--sans);color:var(--muted)}
+.chat-face{display:flex;align-items:center;gap:10px;margin:6px 0 2px;font:600 11px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--face,var(--muted))}
+.chat-face::before,.chat-face::after{content:'';flex:1;border-top:1px solid currentColor;opacity:.35}
+.chat-face span{max-width:80%;text-align:center}
+/* The text chat on the home screen: what was said and the line being typed as one block, together in the middle of the
+   space under the sphere, the typed line right under the last thing said; a long chat fills the space and scrolls
+   (16 Oct, the user: "I want the You Chose Lesson and the typing area to be next to each other"). */
+.study-screen:not(.has-page) .conversation.is-chat{position:absolute;z-index:12;left:50%;transform:translateX(-50%);top:calc(50% - var(--sphere-y,75px) + 178px);bottom:calc(16px + var(--kb,0px));
+  width:min(640px,calc(100vw - 48px));display:flex;flex-direction:column;justify-content:center;gap:10px}
+.study-screen:not(.has-page) .conversation.is-chat .conversation-log{position:relative;top:auto;bottom:auto;left:auto;transform:none;width:auto;max-height:none}
+.study-screen:not(.has-page) .conversation.is-chat .conversation-log.plato{flex:0 1 auto;min-height:0}
+.study-screen:not(.has-page) .conversation.is-chat .conversation-log.mine{flex:none;min-height:1.5em}
+/* His offer to leave the lesson for work (local-actor.js): a button in the face's colour; it starts only when they press it. */
+.chat-offer button{padding:8px 16px;border-radius:999px;background:var(--face);color:#fff;font:600 13.5px/1.2 var(--sans);box-shadow:0 2px 0 color-mix(in srgb,var(--face) 70%,#000)}
+.chat-offer button:hover:not(:disabled){background:color-mix(in srgb,var(--face) 88%,#000)}
+.chat-offer button:disabled{background:var(--tint);color:var(--muted);box-shadow:none;cursor:default}
+.chat-empty{display:flex;flex-wrap:wrap;justify-content:center;gap:8px}.chat-empty p{flex-basis:100%;margin:0 0 4px;text-align:center}
+.chat-starter{padding:7px 14px;border-radius:999px;background:#fff;border:1px solid var(--line-2);font:400 13.5px/1.3 var(--sans);color:var(--ink-2)}
+.chat-starter:hover{border-color:var(--accent);color:var(--accent)}

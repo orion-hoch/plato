@@ -1,0 +1,9 @@
+/* The current topic (AgendaStrip.jsx): one quiet line at the top left, no box. With the page up on a wide screen it heads
+   the conversation's column; on a narrower one the page comes down a line while it shows. */
+.agenda-strip{position:absolute;z-index:30;top:18px;left:22px;display:block;max-width:min(520px,calc(100% - 140px));padding:0;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;
+  text-align:left;font:500 13px/1.55 var(--sans);letter-spacing:.01em;color:var(--muted)}
+.agenda-strip:active:not(:disabled){transform:none}
+.agenda-strip:hover{color:var(--ink)}
+@media (max-width:1259px){.agenda-strip{top:10px;left:16px}}
+@media (max-width:899px){.study-screen:has(>.agenda-strip){--page-top:calc(38px + var(--frame))}}
+@media (min-width:900px){.has-page>.agenda-strip{top:18px;left:var(--talk-left);max-width:min(640px,calc(100% - var(--talk-left) - 32px))}}

@@ -1,0 +1,409 @@
+{
+  "time": "2026-10-08T18:54:45.634Z",
+  "browser": "153.0.8010.12",
+  "scope": "isolated specimen only; text-200 is text resize, not real browser zoom",
+  "examples": [
+    "Computer science · linked list",
+    "Calculus · explore a curve",
+    "Linear algebra · matrix transformation",
+    "Physics · free-body diagram",
+    "Electrical engineering · circuit",
+    "Chemistry · stoichiometry",
+    "Biology · pathway and inhibition",
+    "Statistics · compare samples",
+    "Earth science · time series",
+    "Stress case · long scientific labels",
+    "Stress case · long code signature",
+    "Stress case · wide laboratory table"
+  ],
+  "jsonExamplesParsed": 5,
+  "renderChecks": 180,
+  "interactionChecks": [
+    "trace advance/reset",
+    "keyboard range input",
+    "circuit toggle",
+    "draft preserved on resize",
+    "local form submit"
+  ],
+  "failures": [
+    {
+      "name": "Electrical engineering · circuit",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Chemistry · stoichiometry",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Biology · pathway and inhibition",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Statistics · compare samples",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Earth science · time series",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long scientific labels",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long code signature",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · wide laboratory table",
+      "width": 320,
+      "height": 568,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Electrical engineering · circuit",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Chemistry · stoichiometry",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Biology · pathway and inhibition",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Statistics · compare samples",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Earth science · time series",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long scientific labels",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long code signature",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · wide laboratory table",
+      "width": 390,
+      "height": 844,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Calculus · explore a curve",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "SVG label outside view: f(x)"
+      ]
+    },
+    {
+      "name": "Chemistry · stoichiometry",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Biology · pathway and inhibition",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Statistics · compare samples",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Earth science · time series",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow",
+        "SVG label overlap: 20 / Years from baseline",
+        "SVG label overlap: 30 / Years from baseline",
+        "SVG label overlap: 40 / Years from baseline",
+        "SVG label overlap: 50 / Years from baseline",
+        "SVG label outside view: 0.45",
+        "SVG label outside view: Anomaly (°C)"
+      ]
+    },
+    {
+      "name": "Stress case · long scientific labels",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long code signature",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · wide laboratory table",
+      "width": 768,
+      "height": 640,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Calculus · explore a curve",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "SVG label outside view: f(x)"
+      ]
+    },
+    {
+      "name": "Electrical engineering · circuit",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "SVG label overlap: 6 V / Switch"
+      ]
+    },
+    {
+      "name": "Chemistry · stoichiometry",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Biology · pathway and inhibition",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Statistics · compare samples",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Earth science · time series",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow",
+        "SVG label overlap: 20 / Years from baseline",
+        "SVG label overlap: 30 / Years from baseline",
+        "SVG label overlap: 40 / Years from baseline",
+        "SVG label overlap: 50 / Years from baseline",
+        "SVG label outside view: 0.45",
+        "SVG label outside view: Anomaly (°C)"
+      ]
+    },
+    {
+      "name": "Stress case · long scientific labels",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long code signature",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · wide laboratory table",
+      "width": 1024,
+      "height": 768,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Calculus · explore a curve",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "SVG label outside view: f(x)"
+      ]
+    },
+    {
+      "name": "Biology · pathway and inhibition",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Statistics · compare samples",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Earth science · time series",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow",
+        "SVG label overlap: 20 / Years from baseline",
+        "SVG label overlap: 30 / Years from baseline",
+        "SVG label overlap: 40 / Years from baseline",
+        "SVG label overlap: 50 / Years from baseline",
+        "SVG label outside view: 0.45",
+        "SVG label outside view: Anomaly (°C)"
+      ]
+    },
+    {
+      "name": "Stress case · long scientific labels",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · long code signature",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    },
+    {
+      "name": "Stress case · wide laboratory table",
+      "width": 1440,
+      "height": 900,
+      "variant": "text-200",
+      "issues": [
+        "page horizontal overflow"
+      ]
+    }
+  ],
+  "browserErrors": []
+}

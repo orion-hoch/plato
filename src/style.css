@@ -1,0 +1,70 @@
+/* One palette and one set of type for the whole page: warm ink on white, lapis for Plato and the student's own
+   marks, terracotta and gold as quiet second colours. Every other stylesheet takes its colours and fonts from here. */
+:root{
+  --ink:#1d1b18;--ink-2:#4a453d;--muted:#6f6b64;--faint:#8a857c;
+  --line:#e6e0d4;--line-2:#d8cfbf;--tint:#f4f0e7;--paper:#fbf9f4;--bg:#fff;
+  --accent:#2f4f8a;--accent-deep:#1f3a68;--warm:#b5653e;--warm-deep:#a3542f;--gold:#b08a3e;--good:#2f8a5c;
+  --serif:"Iowan Old Style","Palatino Linotype","Book Antiqua",Georgia,serif;
+  --sans:Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;
+  --mono:ui-monospace,"SF Mono",Menlo,Consolas,monospace;
+  --edge:18px;
+  font-family:var(--sans);font-size:14px;color:var(--ink);background:var(--bg);color-scheme:light;
+  font-synthesis:none;-webkit-font-smoothing:antialiased;font-optical-sizing:auto}
+@media(max-width:620px){:root{--edge:12px}}
+*{box-sizing:border-box}
+body{margin:0}
+button,input{font:inherit}
+input{min-width:0}
+button{border:0;background:none;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent;transition:background .16s,opacity .16s,transform .18s}
+button:disabled{opacity:.35;cursor:default}
+button:active:not(:disabled){transform:scale(.96)}
+button:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:3px}
+input:focus,textarea:focus{outline:none} /* a text field shows its caret, no ring (16 Oct, the user: "the text outline is still existing") */
+button svg{pointer-events:none}
+h1,h2,h3,p{margin:0}
+h1,h2,h3{text-wrap:balance}
+p{text-wrap:pretty}
+svg{flex-shrink:0}
+::selection{background:#dedede}
+dialog{color:var(--ink)}
+@media(prefers-reduced-motion:reduce){*,*:before,*:after{animation:none!important;transition:none!important;scroll-behavior:auto!important}}
+
+/* The round buttons at the screen's edges (the course tree, the log, the ink tools, closing the tree): one size, one
+   colour, a soft step of shadow under them. Small × closes inside a panel are `.close`. */
+.round{width:44px;height:44px;border-radius:50%;display:grid;place-items:center;background:var(--tint);color:var(--accent);box-shadow:0 2px 0 var(--line-2);animation:page-in .2s ease-out both}
+.round:hover{background:var(--line)}
+.close{width:32px;height:32px;border-radius:50%;display:grid;place-items:center;color:var(--faint);font:300 22px/1 var(--sans)}
+.round.close{width:44px;height:44px;color:var(--accent)}
+.close:hover{background:rgba(29,27,24,.05);color:var(--ink)}
+.round.close:hover{background:var(--line);color:var(--accent)}
+
+/* The screen, and the sphere's stage at its middle: one size, which its words, a name and the page never move. */
+.study-screen{position:relative;display:grid;place-items:center;overflow:hidden;min-height:500px}
+.voice-stage{position:absolute;left:50%;top:calc(50% - 70px);transform:translate(-50%,-50%);z-index:5;display:flex;align-items:center;flex-direction:column;
+  width:440px;height:360px;max-width:95vw;padding:0;transition:opacity .25s ease}
+.orb-button{display:grid;place-items:center;border-radius:50%;width:440px;height:360px;max-width:95vw;padding:0;outline-offset:-35px!important}
+.orb-button:hover{background:transparent}
+.voice-canvas{display:block;object-fit:fill;transition:opacity .35s ease}
+@media(max-width:520px){
+  .voice-stage{width:360px;height:310px;top:calc(50% - 75px)}
+  .orb-button{width:360px;height:310px}
+}
+
+/* Talking on or off (the microphone is off until pressed; Space toggles it): bottom right, above nothing. */
+.talk{position:fixed;right:var(--edge);top:var(--edge);z-index:31;color:var(--faint)} /* the speech buttons sit at the top (13 Oct, the user) */
+.talk svg{width:22px;height:22px}
+.talk.is-on{background:var(--accent);color:var(--bg);box-shadow:0 0 0 6px color-mix(in srgb,var(--accent) 22%,transparent)}
+/* Something being made in the background: what, its stage or outline, and a bar against its usual time (src/Making.jsx). */
+.making{position:fixed;top:var(--edge);left:50%;transform:translateX(-50%);z-index:32;width:min(440px,calc(100% - 32px));display:grid;gap:8px;pointer-events:none}
+.making-item{background:var(--paper);border:1px solid var(--line-2);border-radius:10px;padding:10px 12px;box-shadow:0 6px 20px rgb(0 0 0 / 8%);font:14px/1.35 var(--sans);color:var(--ink)}
+.making-head{display:flex;justify-content:space-between;gap:12px}
+.making-label{font-weight:600;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.making-time{color:var(--muted);font-variant-numeric:tabular-nums;white-space:nowrap}
+.making-bar{height:4px;margin-top:8px;border-radius:2px;background:var(--line);overflow:hidden}
+.making-bar span{display:block;height:100%;background:var(--accent);transition:width .5s linear}
+.making-note{margin:6px 0 0;color:var(--ink-2);font-size:13px;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+@media(prefers-reduced-motion:reduce){.making-bar span{transition:none}}
+/* The text chat's read-aloud toggle, left of the talk button (App.jsx). */
+.speak-toggle{position:fixed;right:calc(var(--edge) + 56px);top:var(--edge);z-index:31;color:var(--faint)}
+.speak-toggle svg{width:22px;height:22px}
+.speak-toggle.is-on{color:var(--accent)}

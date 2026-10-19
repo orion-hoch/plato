@@ -1,0 +1,46 @@
+{
+  "examId": "exam_eO4bbhxfYGyVu4Ng",
+  "why": "The linear algebra fixture's topic set: the leaf topics of its three units, the central ones first. Frozen 2026-10-08; change it only with a new file (--topics).",
+  "topics": [
+    {
+      "topicId": "top_gCPwH53QStV0LFqM",
+      "title": "Testing span membership",
+      "unit": "Vectors and vector operations"
+    },
+    {
+      "topicId": "top_8jk-rnhdNidhiK0L",
+      "title": "Span",
+      "unit": "Vectors and vector operations"
+    },
+    {
+      "topicId": "top_ZLJvD32YPMMPh7Mw",
+      "title": "Gaussian elimination, echelon form and RREF",
+      "unit": "Linear systems and augmented matrices"
+    },
+    {
+      "topicId": "top_N54_1nT_68_563_z",
+      "title": "Unique and infinitely many solutions",
+      "unit": "Linear systems and augmented matrices"
+    },
+    {
+      "topicId": "top_MWC2SJZwonZZbof_",
+      "title": "Consistency and contradictory rows",
+      "unit": "Linear systems and augmented matrices"
+    },
+    {
+      "topicId": "top_SknqlOjRt4JzoNIM",
+      "title": "Basic and free variables",
+      "unit": "Linear systems and augmented matrices"
+    },
+    {
+      "topicId": "top_Wgy9xlJI4ZOWmMr3",
+      "title": "Orthogonality",
+      "unit": "Dot product and length"
+    },
+    {
+      "topicId": "top_3ckTUJmfG7CXyZ6A",
+      "title": "Angles between vectors",
+      "unit": "Dot product and length"
+    }
+  ]
+}

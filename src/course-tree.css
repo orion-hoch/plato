@@ -1,0 +1,163 @@
+/* The course page (CourseTree.jsx): a full page over the study screen. A bar with their courses, the course and its overall
+   mastery, then its units in order as numbered cards of topic rows, each row filling with its mastery. */
+/* The left rail (App.jsx): how Plato teaches, the writing tools on a wide screen, and the course, bottom up. */
+.rail{position:fixed;left:var(--edge);bottom:var(--edge);z-index:30;display:flex;flex-direction:column;gap:10px}
+.course-tree{position:fixed;inset:0;z-index:40;background:var(--paper);overflow:auto;overscroll-behavior:contain;animation:tree-in .2s ease-out}
+@keyframes tree-in{from{opacity:0;transform:translateY(6px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.course-tree{animation:none}}
+.tree-bar{position:sticky;top:0;z-index:5;display:flex;align-items:center;gap:12px;min-height:64px;padding:10px var(--edge);background:rgba(251,249,244,.92);backdrop-filter:blur(8px);border-bottom:1px solid var(--line)}
+.course-tree-close{flex:none;margin-left:auto}
+.course-tabs{display:flex;align-items:center;gap:4px;min-width:0;overflow-x:auto;scrollbar-width:none;font:500 13.5px/1.3 var(--sans)}
+.course-tabs::-webkit-scrollbar{display:none}
+.course-tabs>button{flex:none;padding:8px 12px;border-radius:8px;color:var(--muted);white-space:nowrap}
+.course-tabs>button:hover{color:var(--ink);background:var(--tint)}
+.course-tabs>button[aria-current="page"]{color:var(--ink);background:var(--tint);font-weight:600;cursor:default}
+.course-tabs>.course-tab-new{color:var(--accent)}
+.tree-page{max-width:1240px;margin:0 auto;padding:28px var(--edge) 96px}
+.tree-head{position:relative;display:flex;align-items:flex-start;gap:20px;margin:0 4px 26px}
+.tree-head-main{flex:1;min-width:0}
+.tree-head h1{margin:0 0 10px;font:600 30px/1.2 var(--serif);color:var(--ink);letter-spacing:-.01em}
+.tree-name-edit{display:inline-flex;align-items:center;gap:10px;padding:0;font:inherit;color:inherit;text-align:left}
+.tree-name-edit svg{flex:none;color:var(--faint);opacity:0;transition:opacity .15s}
+.tree-name-edit:hover svg,.tree-name-edit:focus-visible svg{opacity:1}
+@media (hover:none){.tree-name-edit svg{opacity:1}}
+.tree-name{display:block;width:100%;max-width:640px;margin:0 0 10px;padding:0;border:0;border-bottom:2px solid var(--accent);background:none;outline:none;font:600 30px/1.2 var(--serif);color:var(--ink);letter-spacing:-.01em}
+.tree-overall{display:flex;align-items:center;gap:12px;font:500 13px/1.3 var(--sans);color:var(--muted)}
+.tree-focus{margin:12px 0 0;font:400 14px/1.4 var(--sans);color:var(--ink-2)}
+.tree-focus button{padding:0;color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.tree-meter{display:block;flex:none;width:56px;height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.tree-meter i{display:block;height:100%;border-radius:3px;background:var(--accent)}
+.tree-meter.big{width:180px;height:6px}
+.tree-units{columns:3 340px;column-gap:16px}
+.tree-units>*{break-inside:avoid;margin-bottom:16px}
+.tree-unit{background:#fff;border:1px solid var(--line);border-radius:14px;padding:6px;box-shadow:0 1px 2px rgba(40,30,10,.04)}
+.tree-unit.in-focus{border-color:var(--accent);box-shadow:0 0 0 1px var(--accent)}
+.tree-unit-head{display:flex;align-items:baseline;gap:10px;width:100%;padding:10px 12px 8px;border-radius:9px;text-align:left}
+.tree-unit-head:hover{background:var(--tint)}
+.tree-unit-num{font:600 13px/1 var(--sans);color:var(--gold);min-width:1.4em}
+.tree-unit-title{flex:1;font:600 18px/1.25 var(--serif);color:var(--ink)}
+.tree-unit-pct{font:500 12px/1 var(--sans);color:var(--muted)}
+.tree-topics{margin:0;padding:0;list-style:none}
+.tree-topics.depth-3,.tree-topics.depth-4{margin-left:28px;border-left:1px solid var(--line);padding-left:4px}
+.tree-topic{display:flex;align-items:center;gap:10px;width:100%;padding:7px 12px;border-radius:8px;text-align:left;font:400 14.5px/1.35 var(--serif);color:var(--ink-2)}
+.tree-topic:hover{background:var(--tint);color:var(--ink)}
+.tree-topic:focus-visible,.tree-unit-head:focus-visible{outline:2px solid var(--ink);outline-offset:-2px}
+.tree-topic.in-focus{background:color-mix(in srgb,var(--accent) 10%,#fff);color:var(--ink)}
+.tree-topic.in-focus .tree-num{color:var(--accent)}
+.tree-topic.low .tree-meter i{background:var(--warm)}
+.tree-num{flex:none;min-width:2.4em;font:500 11.5px/1 var(--sans);color:var(--faint);font-variant-numeric:tabular-nums}
+.tree-title{flex:1;min-width:0}
+.depth-3 .tree-topic,.depth-4 .tree-topic{font-size:13.5px;padding-top:5px;padding-bottom:5px}
+.depth-3 .tree-meter,.depth-4 .tree-meter{width:40px}
+/* While the course loads: grey cards where its units will be. */
+.skeleton{min-height:220px;padding:18px}
+.skeleton i{display:block;height:12px;margin:0 0 16px;border-radius:6px;background:linear-gradient(90deg,var(--line) 0,var(--tint) 50%,var(--line) 100%);background-size:200% 100%;animation:shimmer 1.2s linear infinite}
+.skeleton i:first-child{width:60%;height:16px;margin-bottom:22px}
+.skeleton i:nth-child(3){width:80%}
+@keyframes shimmer{to{background-position:-200% 0}}
+@media (prefers-reduced-motion:reduce){.skeleton i{animation:none}}
+.tree-state{max-width:34em;margin:48px auto 0;padding:0 24px;text-align:center;font:italic 17px/1.5 var(--serif);color:var(--muted)}
+@media (max-width:620px){.tree-units{columns:1}.tree-head h1{font-size:24px}.tree-meter.big{width:110px}}
+/* The learner's map: beside the tree on a wide screen, under it on a narrow one. Statements in the serif, each with a
+   thin bar of how sure the tutor is they can (empty until there is evidence of their own); quiet small-caps heads. */
+.tree-map{padding:8px 24px 48px;max-width:640px;margin:0 auto;color:var(--ink)}
+.tree-map section+section{margin-top:22px}
+.map-head{margin:0 0 8px;font:600 11px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.map-line{margin:0 0 18px;font:italic 16px/1.5 var(--serif);color:var(--ink-2)}
+.map-list{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:9px;font:400 15px/1.4 var(--serif)}
+.map-can{display:grid;grid-template-columns:44px 1fr;align-items:baseline;gap:10px}
+.map-bar{display:block;height:4px;border-radius:2px;background:var(--line);overflow:hidden;align-self:center}
+.map-bar i{display:block;height:100%;background:var(--accent);opacity:.55}
+.map-can.is-secure .map-bar i{opacity:.9}
+.map-can.is-not_yet{color:var(--faint)}
+.map-mastered{color:var(--accent)}
+.map-belief q{font-style:italic}
+.map-note{font:500 12px/1.3 var(--sans);color:var(--faint);white-space:nowrap}
+@media (min-width:1100px){.course-tree.has-map .tree-page{padding-right:372px}.tree-map{position:fixed;top:88px;right:24px;bottom:24px;width:332px;margin:0;padding:0 8px 24px 0;overflow-y:auto;overscroll-behavior:contain}}
+/* Their courses as cards, when there are several and none is chosen yet. */
+.course-choice{position:fixed;inset:0;z-index:60;overflow:auto;background:var(--paper)}
+.course-choice-inner{max-width:880px;margin:0 auto;padding:12vh var(--edge) 64px}
+.course-choice h1{margin:0 0 22px;font:600 30px/1.2 var(--serif);color:var(--ink)}
+.course-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(260px,1fr));gap:14px}
+.course-card{display:flex;flex-direction:column;align-items:flex-start;gap:8px;min-height:120px;padding:18px 20px;border:1px solid var(--line);border-radius:14px;background:#fff;text-align:left;box-shadow:0 1px 2px rgba(40,30,10,.04);transition:border-color .15s,box-shadow .15s,transform .15s}
+.course-card:hover{border-color:var(--line-2);box-shadow:0 6px 20px rgba(40,30,10,.08);transform:translateY(-1px)}
+.course-card:focus-visible{outline:2px solid var(--ink);outline-offset:2px}
+.course-card-title{font:600 19px/1.25 var(--serif);color:var(--ink)}
+.course-card-note{font:400 13px/1.45 var(--sans);color:var(--muted)}
+.course-card-new{border-style:dashed;border-color:var(--line-2);background:transparent;box-shadow:none}
+.course-card-new .course-card-title{color:var(--accent)}
+.course-card-plus{display:grid;place-items:center;width:28px;height:28px;border-radius:50%;background:var(--accent);color:#fff;font:500 18px/1 var(--sans)}
+/* A new course: a dialog over everything. */
+.new-course-backdrop{position:fixed;inset:0;z-index:80;display:grid;place-items:center;padding:16px;background:rgba(29,27,24,.32);animation:tree-in .15s ease-out}
+.new-course{width:min(520px,100%);max-height:calc(100vh - 32px);overflow:auto;padding:26px 26px 20px;border-radius:16px;background:#fff;box-shadow:0 24px 64px rgba(0,0,0,.18);font:400 14px/1.45 var(--sans);color:var(--ink)}
+.new-course h2{margin:0 0 6px;font:600 22px/1.2 var(--serif)}
+.new-course-lede{margin:0 0 18px;color:var(--muted);font-size:13.5px}
+.new-course label{display:block;margin:0 0 14px;font-weight:600;font-size:13px;color:var(--ink-2)}
+.new-course .optional{font-weight:400;color:var(--faint)}
+.new-course input[hidden]{display:none}
+.new-course input,.new-course textarea{display:block;width:100%;margin-top:6px;padding:9px 11px;border:1px solid var(--line-2);border-radius:8px;font:400 14.5px/1.4 var(--sans);color:var(--ink);background:#fff;resize:vertical}
+.new-course input:focus,.new-course textarea:focus{outline:none;border-color:var(--accent)}
+.new-course-drop{display:flex;flex-direction:column;align-items:center;gap:6px;padding:22px 16px;border:1.5px dashed var(--line-2);border-radius:12px;background:var(--paper);text-align:center;cursor:pointer;color:var(--ink-2);transition:border-color .15s,background .15s}
+.new-course-drop:hover,.new-course-drop.is-over{border-color:var(--accent);background:color-mix(in srgb,var(--accent) 6%,#fff)}
+.new-course-drop small{color:var(--faint);font-size:12px}
+.new-course-link{color:var(--accent);text-decoration:underline;text-underline-offset:2px}
+.new-course-files{margin:10px 0 0;padding:0;list-style:none;max-height:180px;overflow:auto}
+.new-course-files li{display:flex;align-items:center;gap:10px;padding:6px 4px;border-bottom:1px solid var(--line);font-size:13px}
+.new-course-files li span{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.new-course-files small{color:var(--faint)}
+.new-course-files button{width:24px;height:24px;border-radius:50%;color:var(--muted);font-size:16px;line-height:1}
+.new-course-files button:hover{background:var(--tint);color:var(--ink)}
+.new-course-status{margin:12px 0 0;color:var(--muted)}
+.new-course-status.is-error{color:var(--warm-deep)}
+.new-course-actions{display:flex;justify-content:flex-end;gap:10px;margin-top:20px}
+.new-course-actions button{padding:9px 16px;border-radius:9px;font:500 14px var(--sans)}
+.new-course-cancel{color:var(--ink-2)}
+.new-course-cancel:hover{background:var(--tint)}
+.new-course-create{color:#fff;background:var(--accent)}
+.new-course-create:hover{background:var(--accent-deep)}
+.new-course-actions button:disabled{opacity:.5;cursor:default}
+/* Their material (Material.jsx): on the course page, a line with the count and what is on its way in, opening to the files;
+   on the study page, one quiet line at the top while new material goes in. */
+.material-box{flex:none;position:relative;width:min(380px,45%);margin-top:4px;border-radius:12px;background:#fff;box-shadow:0 1px 2px rgba(40,30,10,.06)}
+.material-box.is-over{border-color:var(--accent);box-shadow:0 0 0 3px color-mix(in srgb,var(--accent) 15%,transparent)}
+@media (max-width:620px){.tree-head{flex-direction:column}.material-box{width:100%}}
+.material-head{display:flex;align-items:center;gap:8px;padding:4px 6px}
+.material-toggle{flex:1;display:flex;align-items:center;flex-wrap:wrap;gap:4px 10px;padding:8px 10px;border-radius:8px;text-align:left;font:400 13.5px/1.4 var(--sans);color:var(--muted)}
+.material-toggle b{color:var(--ink);font-weight:600}
+.material-toggle:hover{background:var(--tint)}
+.material-sum{display:inline-flex;align-items:center;gap:6px;color:var(--ink-2)}
+.material-add{flex:none;padding:8px 12px;border-radius:8px;font:500 13.5px var(--sans);color:var(--accent)}
+.material-add:hover{background:var(--tint)}
+.material-drop{margin:0;padding:10px 16px;border-top:1px dashed var(--accent);font:500 13px var(--sans);color:var(--accent)}
+.material-problem{margin:0;padding:8px 16px;font:400 13px var(--sans);color:var(--warm-deep)}
+.material-files{position:absolute;top:calc(100% + 6px);right:0;z-index:20;width:min(460px,calc(100vw - 32px));max-height:min(60vh,480px);margin:0;padding:6px;list-style:none;overflow-y:auto;overscroll-behavior:contain;background:#fff;border-radius:12px;box-shadow:0 12px 36px rgba(40,30,10,.16);animation:page-in .15s ease-out both}
+.material-files li{display:flex;align-items:center;gap:12px;padding:6px 10px;font:400 13px/1.35 var(--sans)}
+.material-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--ink-2)}
+.material-state{display:inline-flex;align-items:center;gap:6px;flex:none;color:var(--faint)}
+.material-files .is-in_guide .material-state,.material-files .is-ready .material-state{color:var(--good)}
+.material-files .is-failed .material-state{color:var(--warm-deep)}
+.material-files .is-adding .material-state,.material-files .is-reading .material-state,.material-files .is-uploading .material-state{color:var(--accent)}
+.sync-status{position:fixed;top:14px;left:50%;transform:translateX(-50%);z-index:35;display:flex;align-items:center;gap:8px;max-width:min(560px,calc(100vw - 180px));padding:7px 14px;border:1px solid var(--line);border-radius:999px;background:#fff;box-shadow:0 4px 16px rgba(40,30,10,.08);font:400 13px/1.35 var(--sans);color:var(--ink-2);animation:page-in .2s ease-out both}
+.sync-status>span:last-child{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.sync-status b{font-weight:600;color:var(--ink)}
+.sync-status.is-done{color:var(--good)}
+.sync-tick{font-weight:700}
+.sync-status:active:not(:disabled){transform:translateX(-50%) scale(.98)}
+/* The exam, from today; the course's practice exams, each taken with Plato in exam conditions (17 Oct). */
+.tree-exam{margin:10px 0 0;font:600 14px/1.4 var(--sans);color:var(--warm-deep)}
+.course-card-exam{display:block;margin-bottom:4px;font-weight:600;color:var(--warm-deep)}
+.tree-practice{margin:0 4px 22px}
+.tree-practice h2{margin:0 0 10px;font:600 11px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.tree-practice-cards{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.tree-practice-card{display:flex;align-items:center;justify-content:space-between;gap:12px;padding:14px 16px;background:#fff;border:1px solid var(--line);border-radius:14px}
+.tree-practice-card span{display:flex;flex-direction:column;gap:3px;min-width:0}
+.tree-practice-card b{font:600 16px/1.3 var(--serif);color:var(--ink)}
+.tree-practice-card small{font:400 12.5px/1.4 var(--sans);color:var(--muted)}
+.tree-practice-card button{flex:none;padding:8px 14px;border-radius:999px;background:var(--accent);color:#fff;font:600 13px/1.2 var(--sans)}
+.tree-practice-card button:hover{background:var(--accent-deep)}
+/* What a file is, asked as it is added (Material.jsx): a small card under the head, before the upload starts. */
+.material-note{position:absolute;top:calc(100% + 6px);right:0;z-index:21;display:flex;flex-direction:column;gap:10px;width:min(460px,calc(100vw - 32px));box-sizing:border-box;padding:14px 16px;border-radius:12px;background:#fff;box-shadow:0 8px 28px rgba(40,30,10,.14);font:400 13.5px/1.4 var(--sans)}
+.material-note input:not([type]){width:100%;box-sizing:border-box;padding:9px 11px;border:0;border-radius:8px;background:var(--tint);font:inherit;color:var(--ink);outline:none}
+.material-model{display:inline-flex;align-items:center;gap:8px;color:var(--ink-2);cursor:pointer}
+.material-note-actions{display:flex;justify-content:flex-end;gap:6px}
+.material-note-actions button:not(.material-add){padding:8px 12px;border-radius:8px;font:500 13.5px var(--sans);color:var(--muted)}

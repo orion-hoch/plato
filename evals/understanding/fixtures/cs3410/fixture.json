@@ -1,0 +1,31 @@
+{
+  "name": "cs3410",
+  "course": "Cornell CS 3410 (computer systems), Prelim 1: numbers and bits, C and memory, logic and state, RISC-V assembly and calling conventions",
+  "domain": "computer systems (computable: answers check by running C and RISC-V)",
+  "source": {
+    "kind": "snapshot",
+    "examId": "exam_ePD4rfaawGtJHXw9"
+  },
+  "checks": [
+    "c",
+    "riscv",
+    "arith",
+    "js"
+  ],
+  "catalogued": {
+    "file": "docs/research/course-decomposition.md",
+    "from": "**Catalogued findings",
+    "to": "**Design rules"
+  },
+  "spine": [
+    "Bits have no meaning without an interpretation: the same bits are an int, an unsigned, a float, an address or an instruction depending on who reads them, and as what.",
+    "Memory is one flat array of bytes, and everything (variables, arrays, the stack, the heap, code) lives at an address in it.",
+    "State plus the clock: a sequential circuit's behaviour depends on stored bits that change only at clock edges.",
+    "A function call is a software contract enforced by convention, not by hardware: the convention is what lets separately written functions compose."
+  ],
+  "simulator": {
+    "kind": "code",
+    "module": "beliefs.mjs"
+  },
+  "domainType": "computational"
+}

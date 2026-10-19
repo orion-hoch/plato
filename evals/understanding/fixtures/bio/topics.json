@@ -1,0 +1,46 @@
+{
+  "examId": "exam_UBDoKYKDXBis3ZdF",
+  "why": "Frozen 2026-10-08 by hand from the published course (study's sandbox): the topics the Study agent builds first, the topics the fixture's belief library teaches (beliefs.mjs concepts carry the same topicIds), and a spread over the rest of the course; parent topics where the course nests the idea's leaves under them (the Study builds at that level). Change it only with a new file (--topics).",
+  "topics": [
+    {
+      "topicId": "top_o3J9vF7Xp7ex6Ht3",
+      "title": "Phospholipids and bilayer organization",
+      "unit": "Fluid Mosaic Model"
+    },
+    {
+      "topicId": "top_kEp0R3vxPkaDmYJh",
+      "title": "Selective Permeability",
+      "unit": "Passive Transport"
+    },
+    {
+      "topicId": "top_bHF4CJNoSzgnfRoD",
+      "title": "Diffusion",
+      "unit": "Passive Transport"
+    },
+    {
+      "topicId": "top_ZSZtFv-_PZaPhJeX",
+      "title": "Facilitated Diffusion",
+      "unit": "Passive Transport"
+    },
+    {
+      "topicId": "top_d-E_3UrEoE9b2GIK",
+      "title": "Osmosis",
+      "unit": "Passive Transport"
+    },
+    {
+      "topicId": "top_ynz6jkUs-mWAJYZ_",
+      "title": "Tonicity",
+      "unit": "Osmosis"
+    },
+    {
+      "topicId": "top_J49MO2Gm3LBc7Vi8",
+      "title": "Sodium-potassium Pump",
+      "unit": "Primary Active Transport"
+    },
+    {
+      "topicId": "top_5m7rUEzPXhyegxLa",
+      "title": "Endocytosis",
+      "unit": "Bulk Transport"
+    }
+  ]
+}

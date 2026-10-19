@@ -1,0 +1,22 @@
+/* Arranging (Order.jsx): plain tiles with hairline edges on the sheet. The arrangement is numbered in small gold
+   figures and has a faint dashed floor while it is empty; the tiles still to place sit beside it on a wide page and under
+   it on a phone. A step's indent (nested code, cases) shifts its tile in the arrangement. */
+.element-order{display:grid;grid-template-columns:minmax(0,1fr);gap:18px;align-items:start}
+@media (min-width:900px){.element-order{grid-template-columns:minmax(0,3fr) minmax(0,2fr)}}
+.order-placed,.order-pool{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:8px;min-width:0}
+.order-placed{min-height:58px;padding:8px;border-radius:10px;box-shadow:inset 0 0 0 1px var(--line)}
+.order-placed:empty{background:repeating-linear-gradient(90deg,var(--line) 0 6px,transparent 6px 12px) 8px 50%/calc(100% - 16px) 1px no-repeat}
+.order-pool{padding:8px 0}
+.order-tile{display:flex;align-items:baseline;gap:12px;width:100%;min-height:46px;padding:10px 14px;border-radius:8px;background:var(--paper);
+  box-shadow:inset 0 0 0 1px var(--line-2);text-align:left;color:var(--ink);font:inherit;transition:box-shadow .15s,background .15s}
+.order-placed .order-tile{margin-left:calc(var(--indent,0) * 18px);width:calc(100% - var(--indent,0) * 18px)}
+.order-tile:hover{box-shadow:inset 0 0 0 1px var(--accent)}
+.order-tile:active:not(:disabled){transform:none;background:#f3f5fa}
+.order-tile:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.order-tile.is-held{box-shadow:inset 0 0 0 1px var(--accent);outline:1px dashed var(--accent);outline-offset:3px}
+.order-tile.is-asked .order-words{text-decoration:underline dotted var(--accent);text-underline-offset:4px}
+.order-n{flex:none;min-width:1.4em;font:600 12px/1.6 var(--sans);font-variant-numeric:tabular-nums;color:var(--gold)}
+.order-words{flex:1;min-width:0;overflow-wrap:anywhere}
+.order-words .material:not(.is-inline),.order-words{font-family:var(--serif);font-size:17px;line-height:1.45}
+.order-date{flex:none;font:500 13px var(--mono);color:#8d7624}
+@media (prefers-reduced-motion:reduce){.order-tile{transition:none}}

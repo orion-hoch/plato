@@ -1,0 +1,29 @@
+/* An argument map (ArgMap.jsx): plain cards on the sheet, sources in the sans with their author and date, claims in the
+   serif; connectors under them in the page's hues. Each column keeps a gutter on its right for links within it. */
+.element-argmap{position:relative;margin:0;container-type:inline-size}
+.argmap-links{position:absolute;inset:0;width:100%;height:100%;overflow:visible;pointer-events:none}
+.argmap-cols{position:relative;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.25fr);gap:16px 64px}
+.argmap-col{display:flex;flex-direction:column;justify-content:center;gap:12px;padding-right:30px}
+.argmap-node{position:relative;display:flex;flex-direction:column;gap:4px;padding:10px 14px;border:1px solid var(--line);border-radius:12px;background:var(--paper);text-align:left;color:var(--ink);transition:opacity .2s,border-color .15s,background .15s}
+button.argmap-node{cursor:pointer}
+button.argmap-node:hover{border-color:var(--line-2);background:var(--paper)}
+button.argmap-node:active:not(:disabled){transform:none}
+button.argmap-node:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.argmap-node.is-source .argmap-text{font:500 14px/1.4 var(--sans)}
+.argmap-node.is-claim .argmap-text{font:17px/1.4 var(--serif)}
+.argmap-meta{font:12px/1.3 var(--sans);color:var(--muted)}
+.argmap-node.is-off{opacity:.45;border-style:dashed}
+.argmap-node.is-fallen .argmap-text{color:var(--faint);text-decoration:line-through;text-decoration-color:rgba(181,101,62,.55);text-decoration-thickness:1.5px}
+.argmap-node.is-picked{border-color:var(--accent);box-shadow:0 0 0 1.5px var(--accent)}
+.argmap-node.is-held{outline:1px dashed var(--accent);outline-offset:3px}
+.argmap-node.is-asked{border-color:var(--accent);border-style:dotted}
+.argmap-link{fill:none;stroke-width:1.8;transition:opacity .2s}
+.argmap-link.is-supports{stroke:var(--accent)}
+.argmap-link.is-undermines{stroke:var(--warm);stroke-dasharray:6 4}
+.argmap-link.is-idle{opacity:.28}
+.argmap-head{stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.argmap-head.is-supports{stroke:var(--accent)}
+.argmap-head.is-undermines{stroke:var(--warm)}
+/* A phone: one column, sources first; every link runs in the gutter on the right. */
+@container (max-width:520px){.argmap-cols{grid-template-columns:minmax(0,1fr);gap:14px}.argmap-col{padding-right:34px}}
+@media(prefers-reduced-motion:reduce){.argmap-node,.argmap-link{transition:none}}

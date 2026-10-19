@@ -1,0 +1,33 @@
+{
+  "name": "bio",
+  "course": "Introductory biology: the structure and function of plasma membranes, passive and active transport (OpenStax Biology 2e, chapter 5)",
+  "domain": "biology (conceptual: few answers compute; beliefs are structured, not executable)",
+  "source": {
+    "kind": "sandbox",
+    "sandbox": "/private/tmp/claude-501/-Users-orionhoch-Desktop-study/f99c890b-e324-4c8a-b230-00cb01019671/scratchpad/study-sbx",
+    "examId": "exam_UBDoKYKDXBis3ZdF",
+    "note": "The Study pipeline's sandbox, where its bio course was built from this fixture's files (source/, fetched by fetch.mjs); --fresh-sandbox retakes the copy. Without it: kind 'files' with dir 'source' and run --build-fixture.",
+    "dir": "source",
+    "title": "Biology 2e ch. 5: Plasma Membranes",
+    "mime": "text/markdown",
+    "fetch": "fetch.mjs"
+  },
+  "checks": [
+    "arith",
+    "js"
+  ],
+  "catalogued": null,
+  "spine": [
+    "Molecules move at random; net movement down a gradient is a statistical result, not a goal or a force pulling them.",
+    "A membrane's selectivity comes from its structure (a hydrophobic core, specific proteins), and moving anything against a gradient costs energy."
+  ],
+  "simulator": {
+    "kind": "beliefs",
+    "module": "beliefs.mjs"
+  },
+  "domainType": "science-model",
+  "sandboxEnv": {
+    "LUNA_PUBLISH_WARNING_REVIEWS": "provisional"
+  },
+  "sandboxEnvWhy": "Sandbox-only (approved by the user; the live app stays strict): a course whose validation reports have only warnings publishes as provisional, with the warnings kept on the manifest's unresolvedIssues."
+}

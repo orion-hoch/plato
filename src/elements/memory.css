@@ -1,0 +1,14 @@
+/* A memory diagram stepped through its operations (Memory.jsx): the course's drawing, then the operations as code
+   lines (the page's code tint and hairline), the next one marked in lapis as a trace marks its next line. 16 Oct, the
+   user: "prevent scrolling elements": a long operation wraps under itself, its number hanging, never scrolls. */
+.element-memory{display:flex;flex-direction:column;gap:12px;cursor:pointer;outline:none;border-radius:8px}
+.element-memory:focus-visible{box-shadow:0 0 0 2px rgba(47,79,138,.35)}
+.memory-ops{margin:0;padding:8px 0;list-style:none;counter-reset:op;border:1px solid var(--line);border-radius:8px;background:var(--tint);
+  font:14px/1.55 var(--mono);color:var(--ink)}
+.memory-ops li{counter-increment:op;padding:1px 16px 1px 3.6em;text-indent:-3.6em;white-space:pre-wrap;overflow-wrap:anywhere}
+.memory-ops li::before{content:counter(op);display:inline-block;width:2.6em;margin-right:1em;text-indent:0;text-align:right;color:var(--faint);font-variant-numeric:tabular-nums}
+.memory-ops li.is-done{color:var(--faint)}
+.memory-ops li.is-next{background:rgba(47,79,138,.13);box-shadow:inset 3px 0 var(--accent)}
+.memory-ops li.is-held{box-shadow:inset 3px 0 var(--accent),inset 0 0 0 1px rgba(47,79,138,.45);background:repeating-linear-gradient(90deg,rgba(47,79,138,.10) 0 6px,rgba(47,79,138,.04) 6px 12px)}
+.element-memory rect.is-asked{stroke:var(--accent);stroke-width:1.5;stroke-dasharray:3 3}
+@media(pointer:coarse){.memory-ops{font-size:15px}}

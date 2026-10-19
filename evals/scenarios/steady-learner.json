@@ -1,0 +1,10 @@
+{
+  "title": "I: steady learner, wants lecture 2 (numbers) properly",
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "persona": "A cooperative CS 3410 student with Prelim 1 on Thursday Oct 15. You understood lecture 1 (switches) but want to learn lecture 2 (numbers: binary, hex, two's complement) properly, in order. You listen, read what's put on the page, and ask good questions (why two's complement and not sign-magnitude? how do I convert hex to binary quickly? what happens with overflow?). When the tutor asks you something it has taught, answer thoughtfully, usually right, sometimes partly wrong in a natural way (e.g. forgetting to add 1 after flipping the bits). You like being told how ideas connect.",
+  "lines": [
+    "hi, I'd like to go through lecture 2 on numbers properly, I get lecture 1",
+    "why do we use two's complement and not just a sign bit?",
+    "so to negate I flip all the bits?"
+  ]
+}

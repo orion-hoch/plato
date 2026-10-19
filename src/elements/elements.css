@@ -1,0 +1,135 @@
+/* Visuals Plato made in the background (Element.jsx), drawn like the course diagrams: on the sheet itself, no
+   panel; captions in the serif. 16 Oct, the user: "prevent scrolling elements because they are really annoying": a
+   circuit or a figure scales to fit its column, no floor and no sideways scroll; a phone pinch-zooms a small label. */
+.element-circuit,.element-scene{margin:0;max-width:100%}
+.element-circuit svg{display:block;width:var(--w);max-width:100%;height:auto;margin:0 auto}
+.element-circuit figcaption,.element-scene figcaption{margin:8px auto 0;max-width:34em;text-align:center;font:italic 15px/1.45 var(--serif);color:var(--muted)}
+.circuit-switch{cursor:pointer;outline:none}
+.circuit-hit{fill:transparent}
+.circuit-switch:focus-visible .circuit-hit{stroke:var(--accent);stroke-width:1.5}
+
+/* A figure: the model's SVG in the page's palette. It sets only classes: a colour class sets the colour a shape is
+   outlined and a text written in (ink by default); fill-* gives a shape a pale fill, solid fills it with its colour. */
+.element-figure{margin:0;max-width:100%}
+.element-figure svg{display:block;width:var(--w);max-width:100%;height:auto;margin:0 auto;overflow:visible;color:var(--ink);font:14px var(--sans)}
+.element-figure figcaption{margin:8px auto 0;max-width:34em;text-align:center;font:italic 15px/1.45 var(--serif);color:var(--muted)}
+.figure-view :is(path,line,polyline,polygon,rect,circle,ellipse){fill:none;stroke:currentColor;stroke-width:1.4px;stroke-linecap:round;stroke-linejoin:round}
+.figure-view :is(text,tspan){fill:currentColor;stroke:none}
+.figure-view .ink{color:var(--ink)}.figure-view .muted{color:var(--muted)}.figure-view .lapis{color:var(--accent)}.figure-view .terracotta{color:var(--warm)}
+.figure-view .gold{color:#bfa035}.figure-view .green{color:var(--good)}.figure-view .faint{color:var(--line-2)}
+/* Gold and faint are lines' colours; as type they are a step darker, to be read. */
+.figure-view :is(text,tspan).gold,.figure-view .gold :is(text,tspan){color:#8d7624}
+.figure-view :is(text,tspan).faint,.figure-view .faint :is(text,tspan){color:var(--faint)}
+.figure-view .fill-lapis{fill:#e3e8f2}.figure-view .fill-terracotta{fill:#f5e4d9}.figure-view .fill-gold{fill:#f3ebcc}.figure-view .fill-green{fill:#dcede3}
+.figure-view .fill-paper{fill:var(--paper)}.figure-view .solid{fill:currentColor}
+.figure-view .mono{font-family:var(--mono)}
+.figure-view .serif{font-family:var(--serif);font-size:15px}
+.figure-view .small{font-size:12px}
+.figure-view :is(text,tspan).bold,.figure-view .bold :is(text,tspan){font-weight:600}
+.figure-view :is(path,line,polyline,polygon,rect,circle,ellipse).bold,.figure-view .bold :is(path,line,polyline,polygon,rect,circle,ellipse){stroke-width:2.2px}
+.figure-view .faint:is(path,line,polyline,polygon,rect,circle,ellipse),.figure-view .faint :is(path,line,polyline,polygon,rect,circle,ellipse){stroke-width:1px}
+.figure-view .dashed{stroke-dasharray:5 4}
+
+/* A trace: the page's code block, the line about to run marked in lapis. 16 Oct, the user: "prevent scrolling
+   elements": a long line wraps under itself, its number hanging in the gutter. */
+.element-trace{display:flex;flex-direction:column;gap:12px;cursor:pointer;outline:none;border-radius:8px}
+.element-trace:focus-visible{box-shadow:0 0 0 2px rgba(47,79,138,.35)}
+.element-trace pre{margin:0;padding:10px 0}
+.element-trace pre code{display:block}
+.trace-line{display:block;padding:0 16px 0 3.6em;text-indent:-3.6em;white-space:pre-wrap;overflow-wrap:anywhere}
+.trace-line.is-next{background:rgba(47,79,138,.13);box-shadow:inset 3px 0 var(--accent)}
+.trace-gutter{display:inline-block;width:2.6em;margin-right:1em;text-indent:0;text-align:right;color:var(--faint);font-variant-numeric:tabular-nums;user-select:none}
+.element-trace .trace-vars{margin:0;display:flex;flex-wrap:wrap;gap:4px 20px;font:14px/1.5 var(--mono);color:var(--ink-2)}
+.trace-vars .is-changed{color:var(--accent);font-weight:600}
+.element-trace .trace-note{margin:0;font-style:italic;color:var(--ink-2)}
+.element-trace .trace-step{margin:0;font:500 12px var(--sans);color:var(--faint);font-variant-numeric:tabular-nums}
+
+/* A 3D scene: a transparent canvas on the sheet, labels as text over it. */
+.scene-view{position:relative;width:100%}
+.scene-view canvas{display:block}
+.scene-view.is-loading{aspect-ratio:4/3;max-height:420px}
+.scene-labels{position:absolute;inset:0;pointer-events:none}
+.scene-label{font:600 13px var(--sans);color:var(--ink);text-shadow:0 0 3px #fff,0 0 3px #fff,0 0 6px #fff}
+
+/* The student's work zones (CodeZone, LatexZone): keys and presses in them are theirs, never ink or the typed line.
+   Code: the page's code tint and hairline, line numbers, and a terminal pane a shade darker under it, in ink.
+   16 Oct, the user: "prevent scrolling elements because they are really annoying": the editor wraps long lines (each
+   line a block numbered in the left padding, the textarea wrapping the same way over it) and the terminal grows. */
+.zone-code{border-radius:8px;overflow:hidden;background:var(--tint);color:var(--ink);font:14px/1.55 var(--mono)}
+.zone-stack{display:grid}
+.zone-stack>pre,.zone-stack>textarea{grid-area:1/1;margin:0;padding:10px 16px 10px calc(2.4em + 24px);border:0;font:inherit;letter-spacing:normal;tab-size:4;white-space:pre-wrap;overflow-wrap:anywhere}
+.zone-stack>pre{counter-reset:line}
+.zone-line{display:block;position:relative;counter-increment:line}
+.zone-line::before{content:counter(line);position:absolute;top:0;right:calc(100% + 12px);color:var(--faint);user-select:none;font-variant-numeric:tabular-nums}
+.zone-line.is-next{background:rgba(47,79,138,.13);box-shadow:inset 3px 0 var(--accent)}
+.zone-stack>textarea{min-width:0;resize:none;overflow:hidden;background:none;color:transparent;caret-color:var(--ink);outline:none}
+.zone-stack>textarea::selection{background:rgba(47,79,138,.2)}
+
+.zone-term{border-top:1px solid var(--line);background:var(--line);padding:2px 8px 4px 12px;font-size:13px}
+.zone-bar{display:flex;align-items:center;gap:2px;min-height:32px}
+.zone-status{flex:1;color:var(--faint);font:500 12px var(--sans)}
+.zone-key{min-height:28px;padding:4px 10px;border-radius:6px;color:var(--accent);font:500 12px var(--sans)}
+.zone-key:hover{background:rgba(47,79,138,.08)}
+.zone-regs{margin:2px 0 6px;display:flex;flex-wrap:wrap;gap:2px 18px;color:var(--ink-2)}
+.zone-regs .is-changed{color:var(--accent);font-weight:600}
+.zone-out{margin:2px 0 6px;font:inherit;white-space:pre-wrap;overflow-wrap:anywhere;color:var(--ink)}
+.zone-out.is-bad{color:var(--warm-deep)}
+
+/* LaTeX steps: the equation first, its source small and muted beneath, clearer while it has the keys. A long step is
+   zoomed to fit by fit.js (16 Oct, "prevent scrolling elements"); it scrolls only past the 50% floor. */
+.zone-latex{display:flex;flex-direction:column;gap:14px}
+.latex-step{display:flex;flex-direction:column;gap:2px}
+.latex-out{min-height:1.5em;overflow-x:auto;overflow-y:hidden;cursor:text}
+.latex-out .katex-display{margin:0;text-align:left}
+.latex-out .katex-display>.katex{text-align:left}
+.latex-out.is-bad{font:15px/1.6 var(--mono);color:#b5765a;white-space:pre-wrap;overflow-wrap:anywhere}
+.latex-src{width:100%;padding:0;border:0;background:none;outline:none;color:var(--faint);font:13px/1.5 var(--mono)}
+.latex-step.is-focused .latex-src{color:var(--ink-2)}
+/* A phone zooms into a field typed in below 16px. */
+@media(pointer:coarse){.zone-code,.latex-src{font-size:16px}}
+
+/* The task layer under an element (Element.jsx): a held step or switch waits for the learner's prediction (a dashed
+   lapis outline); what they predicted stays on the page, and once revealed the engine's value stands beside it, lapis
+   when it matches, terracotta when it doesn't. */
+.element{display:flex;flex-direction:column;gap:12px}
+.trace-line.is-held{box-shadow:inset 3px 0 var(--accent),inset 0 0 0 1px rgba(47,79,138,.45);background:repeating-linear-gradient(90deg,rgba(47,79,138,.10) 0 6px,rgba(47,79,138,.04) 6px 12px)}
+.trace-vars .is-asked{text-decoration:underline dotted var(--accent);text-underline-offset:4px}
+.circuit-switch.is-held rect:not(.circuit-hit){stroke-dasharray:3 3;stroke:var(--accent)}
+.is-asked circle{stroke:var(--accent);stroke-dasharray:2 2}
+.task-rows{margin:0;display:flex;flex-direction:column;gap:6px;font:15px/1.5 var(--mono);color:var(--ink-2)}
+.task-row{display:flex;flex-wrap:wrap;align-items:baseline;gap:6px 22px}
+.task-who{font:600 11px/1.3 var(--sans);letter-spacing:.08em;text-transform:uppercase;color:var(--gold)}
+.task-cell{display:inline-flex;align-items:baseline;gap:8px}
+.task-name{color:var(--muted)}
+.task-guess{color:var(--ink)}
+.task-guess.is-open{color:var(--accent);font-weight:600}
+.task-truth{padding-left:8px;border-left:1px solid var(--line);font-weight:600}
+.task-truth.is-right{color:var(--accent)}
+.task-truth.is-wrong{color:var(--warm)}
+.element-compare{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,280px),1fr));gap:28px}
+.compare-side{display:flex;flex-direction:column;gap:8px;min-width:0}
+.compare-value{margin:0;font:600 15px/1.4 var(--mono)}
+.compare-value.is-theirs{color:var(--warm)}
+.compare-value.is-truth{color:var(--accent)}
+
+/* A proof in sections (ProofZone): proof shapes as small words, then each section's heading (renamed in place, its keys
+   quiet until hovered), its prose and math drawn, its source small beneath like the LaTeX zone's; the palette while typing. */
+.zone-proof{display:flex;flex-direction:column;gap:12px}
+.proof-shapes{display:flex;flex-wrap:wrap;gap:0 12px;font:500 11.5px/1.3 var(--sans)}
+.proof-shapes button{padding:5px 0;color:var(--faint)}
+.proof-shapes button:hover{color:var(--ink)}
+.proof-section{display:flex;flex-direction:column;gap:4px;padding-left:12px;border-left:2px solid var(--line)}
+.proof-section.is-focused{border-left-color:var(--accent)}
+.proof-head{display:flex;align-items:center;gap:6px}
+.proof-heading{flex:1;min-width:0;padding:0;border:0;background:none;outline:none;color:var(--ink);font:600 14px/1.4 var(--sans)}
+.proof-heading:focus-visible{box-shadow:0 1px 0 var(--line-2)}
+.proof-keys{display:flex;gap:2px;opacity:.35}
+.proof-section:hover .proof-keys,.proof-section:focus-within .proof-keys{opacity:1}
+.proof-keys button{min-width:28px;min-height:28px;border-radius:6px;color:var(--ink-2);font:14px var(--sans)}
+.proof-keys button:hover:not(:disabled){background:var(--tint)}
+.proof-keys button:disabled{opacity:.3}
+.proof-out{cursor:text}
+.proof-src{width:100%;padding:0;border:0;background:none;outline:none;resize:none;overflow:hidden;color:var(--faint);font:13px/1.5 var(--mono)}
+.proof-section.is-focused .proof-src{color:var(--ink-2);box-shadow:0 1px 0 var(--line-2)}
+.proof-add{align-self:flex-start;padding:4px 0;color:var(--accent);font:500 12px var(--sans)}
+@media(pointer:coarse){.proof-src{font-size:16px}}

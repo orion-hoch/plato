@@ -1,0 +1,70 @@
+/* The page: where Plato's material appears, in crisp type with nothing laid under it. No sheet and no edge of
+   its own: it is the same white as all round it, and the stones of its frame are its only edge. It scrolls
+   inside itself; a finger scrolls it, a pen or a mouse writes on it. Its place is the workspace's
+   (--page-* in talk-screen.css). */
+.page{position:absolute;z-index:4;top:var(--page-top);bottom:var(--page-bottom);left:0;right:0;margin:0 auto;width:var(--page-w);box-sizing:border-box;
+  display:flex;flex-direction:column;gap:32px;padding:44px 56px 56px;overflow-y:auto;overscroll-behavior:contain;touch-action:pan-y;touch-action:pan-y pinch-zoom;
+  color:var(--ink);font:400 19px/1.6 var(--serif);animation:page-in .3s ease-out both}
+.page>*{flex-shrink:0}
+.page-close{position:absolute;top:10px;right:12px}
+.page-part{display:flex;flex-direction:column;gap:14px;animation:page-in .35s ease-out both}
+.page-label{margin:0;font:600 11px/1.3 var(--sans);letter-spacing:.14em;text-transform:uppercase;color:var(--gold)}
+.page-label .katex{text-transform:none;letter-spacing:normal}
+/* What Plato asks sits below the material, set off by a hairline. */
+.page-part+.page-ask{padding-top:28px;border-top:1px solid rgba(29,27,24,.1)}
+.page-ask{scroll-margin:24px}
+.page-ask.is-open{min-height:60%}
+.page-steps{margin:0;padding-left:1.5em;display:flex;flex-direction:column;gap:10px}
+.page-steps li{padding-left:.25em;animation:page-in .35s ease-out both}
+.page-steps li::marker{font:600 .7em var(--sans);color:var(--gold)}
+.page-next{align-self:flex-start;min-height:34px;padding:6px 16px;border-radius:999px;box-shadow:inset 0 0 0 1px rgba(47,79,138,.4);color:var(--accent);font:500 13px var(--sans)}
+.page-next:hover{background:rgba(47,79,138,.06)}
+@keyframes page-in{from{opacity:0;transform:translateY(6px)}}
+/* An exam problem's parts (each also a part of the page, so writing on one belongs to it): its letter, lapis while it
+   has focus, its prompt, and its points as a quiet number at the right; then where it is answered. Typing shows as
+   plain text, with room under it to write. */
+.page-part.exam-part{margin-top:14px;padding-top:0;border-top:0;gap:12px}
+.exam-head{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:baseline;gap:12px}
+.exam-id{font:600 12px var(--sans);letter-spacing:.06em;color:var(--faint)}
+.exam-part.is-focused .exam-id{color:var(--accent)}
+.exam-points{font:500 12px var(--sans);color:var(--faint);font-variant-numeric:tabular-nums}
+.exam-room{min-height:110px}
+.exam-room.is-draw{min-height:220px}
+.exam-typed{display:block;width:100%;min-height:1.6em;padding:0;border:0;background:none;resize:none;outline:none;color:var(--ink);font:inherit;field-sizing:content}
+
+/* Choices: clean tiles to press. */
+.pb-choices{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,200px),1fr));gap:10px}
+.pb-choice{display:flex;align-items:baseline;gap:12px;min-height:52px;padding:12px 16px;border-radius:10px;background:#fff;box-shadow:inset 0 0 0 1px rgba(29,27,24,.14);
+  text-align:left;color:var(--ink);font-size:18px;line-height:1.4;transition:box-shadow .15s,background .15s}
+.pb-choice:hover:not(:disabled,.is-picked){box-shadow:inset 0 0 0 1px rgba(47,79,138,.6)}
+.pb-choice:active:not(:disabled){transform:none;background:#f3f5fa}
+.pb-choice.is-picked{background:#f3f5fa;box-shadow:inset 0 0 0 2px var(--accent)}
+.pb-choice:disabled{cursor:default;opacity:.5}
+.pb-choice.is-picked:disabled{opacity:1}
+.pb-choice-id{flex:none;font:600 12px var(--sans);letter-spacing:.06em;color:var(--faint)}
+.pb-choice.is-picked .pb-choice-id{color:var(--accent)}
+
+/* The student's ink over the whole workspace, and its few tools while there is any. */
+.ink{position:absolute;inset:0;width:100%;height:100%;z-index:8;pointer-events:none}
+/* The student's tools for their writing, at the bottom right (the course tree's button is at the bottom left; on a wide
+   screen, above it), only while there is writing: an eraser to switch on and off, and a clear. On, the eraser is lapis
+   and the pointer is a ring. */
+.ink-tools{position:fixed;right:var(--edge);bottom:var(--edge);z-index:30;display:flex;flex-direction:column;gap:10px}
+.ink-tool[aria-pressed="true"],.ink-tool[aria-pressed="true"]:hover{background:var(--accent);color:var(--paper);box-shadow:0 2px 0 var(--accent-deep)} /* hovered too: the light hover behind a white mark flashed white (16 Oct) */
+.study-screen.is-erasing,.study-screen.is-erasing .page{cursor:url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='30' height='30'><circle cx='15' cy='15' r='13' fill='rgba(47,79,138,0.07)' stroke='%232f4f8a' stroke-width='1.5'/></svg>") 15 15,cell}
+/* Wide screens, where the conversation has the right-hand column (talk-screen.css): above the tree's button in the left
+   margin instead, beside the page they write on. */
+@media(min-width:900px){.rail .ink-tools{position:static;display:contents}}
+
+@media(max-width:860px){.page{padding:36px 22px 40px;font-size:18px;gap:28px}}
+@media(prefers-reduced-motion:reduce){.page,.page-part,.page-steps li,.ink-tools{animation:none}}
+/* An anatomy figure (BoardStage.jsx AnatomyFrame): its own page, framed on the paper; its height comes from inside it. */
+.page-anatomy{display:block;width:100%;border:0;background:transparent;color-scheme:light}
+/* A Manim clip (BoardStage.jsx Clip): the page's width at most, its own aspect. */
+.page-clip{margin:8px 0}.page-clip video{display:block;width:100%;height:auto;max-height:70vh;border-radius:6px;background:var(--paper)}
+/* A question marked on the page from Plato's answer key (page.js): the verdict and his explain under the options. */
+.page-verdict{margin-top:14px;padding:12px 14px;border-radius:10px;font:400 15px/1.5 var(--sans);color:var(--ink);animation:page-in .2s ease-out both}
+.page-verdict b{margin-right:6px}
+.page-verdict.is-right{background:color-mix(in srgb,var(--good) 12%,#fff)}.page-verdict.is-right b{color:var(--good)}
+.page-verdict.is-wrong{background:color-mix(in srgb,var(--warm) 14%,#fff)}.page-verdict.is-wrong b{color:var(--warm-deep)}
+.page-verdict>div{margin-top:6px}.page-verdict .material{font:400 15px/1.5 var(--sans)}

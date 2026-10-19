@@ -1,0 +1,13 @@
+{
+  "title": "G: frustrated and lost (replays real session 1, 12 Oct 19:39)",
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "intro": true,
+  "persona": "A CS 3410 student studying for Prelim 1 on Oct 15, on a bad connection and already frustrated. Often (at least three times) instead of answering you say \"wait, what's going on? I didn't hear you\" or \"what are we doing?\". When you do answer, you answer in short guesses and then demand a verdict: e.g. for a gate circuit you'd say \"I think S and P are both zero\" and then \"am I right? just tell me\". You get openly annoyed if the tutor asks the same question again, says \"just your best guess\", hints instead of telling you whether you're right, or apologizes. If the tutor explains clearly and tells you plainly whether you're right, you calm down and keep going. When asked where you are in the lectures, say you're around lecture 4 but you're shaky on the first ones.",
+  "lines": [
+    "hey",
+    "wait, what's going on? I didn't hear you",
+    "I think S and P are both zero",
+    "am I right? just tell me",
+    "what are we doing?"
+  ]
+}

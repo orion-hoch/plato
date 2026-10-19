@@ -1,0 +1,17 @@
+/* A trace table (TraceTable.jsx): the page's booktabs table (material.css) in monospace, row numbers small and muted.
+   The next row waits with a lapis rule at its left, dashed while it waits for the learner's prediction; later rows are
+   empty lines to be filled. */
+.element-tracetable{cursor:pointer;outline:none;border-radius:8px}
+.element-tracetable:focus-visible{box-shadow:0 0 0 2px rgba(47,79,138,.35)}
+.element-tracetable .table{margin:0}
+.element-tracetable table{font:15px/1.5 var(--mono);min-width:min(100%,260px)}
+.element-tracetable th{font:600 13px/1.4 var(--mono)}
+.element-tracetable td{min-width:3.5em;height:1.9em}
+.element-tracetable .tt-n{width:2.2em;padding-right:.4em;text-align:right;font:500 12px var(--sans);font-variant-numeric:tabular-nums;color:var(--faint)}
+.element-tracetable td.is-changed{color:var(--accent);font-weight:600}
+.element-tracetable td.is-wrong{text-decoration:underline wavy var(--warm);text-underline-offset:4px}
+.element-tracetable tr.tt-next td,.element-tracetable tr.tt-next th{background:rgba(47,79,138,.06)}
+.element-tracetable tr.tt-next th{box-shadow:inset 3px 0 var(--accent)}
+.element-tracetable tr.tt-next.is-held td{background:repeating-linear-gradient(90deg,rgba(47,79,138,.10) 0 6px,rgba(47,79,138,.04) 6px 12px)}
+.element-tracetable td.is-asked{color:var(--accent);font-weight:600}
+.element-tracetable tr.tt-later td{color:transparent}

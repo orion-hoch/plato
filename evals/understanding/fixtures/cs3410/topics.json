@@ -1,0 +1,66 @@
+{
+  "examId": "exam_ePD4rfaawGtJHXw9",
+  "why": "CS 3410 Prelim 1 topics, one or two per unit, the central ones first (what prelims test hardest: number representation, pointers, RISC-V memory and calls). Frozen 2026-10-08; change it only with a new file (--topics), so scoreboard rows stay comparable.",
+  "topics": [
+    {
+      "topicId": "top_19GPgvM7VX2py6Kk",
+      "title": "Two's Complement",
+      "unit": "Signed Numbers (Lecture 2: Numbers)"
+    },
+    {
+      "topicId": "top_l8nI67tXPqtbjJsV",
+      "title": "Pointer Arithmetic",
+      "unit": "Arrays (Lecture 8: Arrays and Pointers)"
+    },
+    {
+      "topicId": "top_F4ck71Jqf_QUtnAf",
+      "title": "Pointers as References, and Dereferencing",
+      "unit": "Memory (Lecture 8: Arrays and Pointers)"
+    },
+    {
+      "topicId": "top_lxQfRxnXym12Wg9d",
+      "title": "Sign and Zero Extension",
+      "unit": "Memory Access in Assembly (Lecture 16: RISC-V Memory)"
+    },
+    {
+      "topicId": "top_J1XImaw8UibFzhUC",
+      "title": "Saved Registers",
+      "unit": "Calling convention (Lecture 19: Calling Conventions)"
+    },
+    {
+      "topicId": "top_RkI4Fs9jTgwXxSep",
+      "title": "Array-Summing Loop",
+      "unit": "Control Flow in Assembly (Lecture 18: Control Flow)"
+    },
+    {
+      "topicId": "top_sQLksQGpbzeUDxL6",
+      "title": "Normal Single-Precision Encoding",
+      "unit": "Floating Point (Lecture 6: Float)"
+    },
+    {
+      "topicId": "top_RdBspG7RJn12nSYi",
+      "title": "Masking",
+      "unit": "Bit Packing (Lecture 7: Bit Packing)"
+    },
+    {
+      "topicId": "top_Od97D8zm9qnvDhNP",
+      "title": "The Heap Commandments",
+      "unit": "The Heap (Lecture 9: Heap and Allocation)"
+    },
+    {
+      "topicId": "top_pZW52432hogvebIM",
+      "title": "Sum-of-products",
+      "unit": "Gates & Logic (Lecture 10: Gates and Logic)"
+    },
+    {
+      "topicId": "top_2MmWReknFDqgeXZ2",
+      "title": "D Flip-Flop",
+      "unit": "Stateful Logic (Lecture 11: State)"
+    },
+    {
+      "topicId": "top_IjHXhsdqQ5G3UYeo",
+      "title": "Pipelined Processor",
+      "unit": "CPU Architecture (Lecture 13: Architecture)"
+    }
+  ]
+}

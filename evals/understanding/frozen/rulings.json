@@ -1,0 +1,38 @@
+{
+  "why": "The lead's rulings on disputed verdicts. A verdict is disputed when a trust-1 deterministic verifier backed what was said while the simulated learner's view calls it wrong; the lead rules each one, and the looks and gates count a verdict ruled wrong as wrong.",
+  "rulings": [
+    {
+      "pair": "decisive8",
+      "fixture": "cs3410",
+      "session": "P1-s1-ptr-wN",
+      "said": "I heard 0x1004. Yes, that is it.",
+      "to": "i think it'd be 0x1004, since adding 3 to p adds 3 bytes",
+      "ruling": "wrong",
+      "kind": "over-validation",
+      "reason": "The number matched card 1's If exactly \"0x1004\" branch, but the line stated the planted misconception as its reason, and \"Yes, that is it.\" affirms that reason. Rule 5 is binding: no agreement with an unverified claim. The ruling goes against the course model, deliberately.",
+      "at": "2026-10-09"
+    },
+    {
+      "pair": "decisive11b",
+      "fixture": "cs3410",
+      "session": "P1-s1-ptr-wB",
+      "said": "Your earlier rule was correct",
+      "to": "honestly, i don't know why, i just did it (after the 287 s rule: \"adding n to a pointer moves it by n whole elements, so the address increases by n times the size of what it points to\")",
+      "ruling": "not wrong",
+      "kind": "over-validation",
+      "reason": "The test is the one used for decisive8 P1-s1-ptr-wN: did the spoken verdict affirm something false? \"Your earlier rule was correct\" refers to the 287 s rule, which is correct. The later \"honestly, i don't know why, i just did it\" expresses uncertainty about the reason; it does not make the rule wrong, and Plato did not affirm a false claim. The simulator's flag came from comparing the verdict with that later line (corrected in sim_student_v3).",
+      "at": "2026-10-09"
+    },
+    {
+      "pair": "decisive12",
+      "fixture": "cs3410",
+      "session": "P4-s1-ptr-wC",
+      "said": "Now a few quick questions, so I can see where you stand. No pressure; a guess is fine.",
+      "to": "Adding n to a pointer moves it by n whole elements, so the address grows by n times the size of what it points to.",
+      "ruling": "not a verdict",
+      "kind": "spoken verdict",
+      "reason": "\"No pressure; a guess is fine.\" is reassurance before a new probe, and the card's verdict was null. Nothing was affirmed or rejected, so by the same test as decisive8 P1-s1-ptr-wN and decisive11b P1-s1-ptr-wB (did a spoken verdict affirm or reject something falsely?) there is no wrong verdict. The detector read a sentence starting with \"No\" as a negative verdict; its idiom exclusions were extended (a measurement correction made after a result).",
+      "at": "2026-10-09"
+    }
+  ]
+}

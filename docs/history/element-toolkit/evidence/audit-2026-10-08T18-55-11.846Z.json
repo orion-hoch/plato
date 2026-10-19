@@ -1,0 +1,30 @@
+{
+  "time": "2026-10-08T18:55:11.846Z",
+  "browser": "153.0.8010.12",
+  "scope": "isolated specimen only; text-200 is text resize, not real browser zoom",
+  "examples": [
+    "Computer science · linked list",
+    "Calculus · explore a curve",
+    "Linear algebra · matrix transformation",
+    "Physics · free-body diagram",
+    "Electrical engineering · circuit",
+    "Chemistry · stoichiometry",
+    "Biology · pathway and inhibition",
+    "Statistics · compare samples",
+    "Earth science · time series",
+    "Stress case · long scientific labels",
+    "Stress case · long code signature",
+    "Stress case · wide laboratory table"
+  ],
+  "jsonExamplesParsed": 5,
+  "renderChecks": 180,
+  "interactionChecks": [
+    "trace advance/reset",
+    "keyboard range input",
+    "circuit toggle",
+    "draft preserved on resize",
+    "local form submit"
+  ],
+  "failures": [],
+  "browserErrors": []
+}

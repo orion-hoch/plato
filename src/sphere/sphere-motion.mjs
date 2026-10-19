@@ -1,0 +1,887 @@
+import { TAU, clamp, smooth, follow, hash, quatAxis, quatMul, quatRotate, quatConjugate, quatToMat3, quatBetween } from './sphere-math.mjs';
+import { COURSES, FACE_ARC, PITCH, SHEET_ROW, SHEET_STONE } from './sphere-field.mjs';
+
+export const BANDS = 16;
+// One stone's state for one frame, as the renderer uploads it: a unit
+// quaternion, a position, how clear of the mortar it stands (for shading), and
+// which stone is on each of its two sides.
+export const STRIDE = 12, TURN = 0, PLACE = 4, FACES = 8;
+// One socket's piece of the shell for one frame: the turn and the shift that
+// carry it, with its cell of mortar and its stone, when the shell cracks open.
+export const CELL_STRIDE = 8;
+// The stones a block can show. A block has two sides; the one in its socket is
+// changed out of sight, and it shows it by lifting clear and turning over.
+// The last is the pale stone of a document's page.
+export const GREY = 0, LIVE = 1, GREEN = 2, WARM = 3, PAGE = 4;
+// A side can also be glazed with one colour of a picture the sphere is showing: the side's stone is
+// PICTURE, and its colour (r·65536 + g·256 + b) rides with it in the stone's state, one per side.
+export const PICTURE = 5;
+// A picture is turned in stone by stone from the middle of the face outwards, this many ticks from
+// middle to limb, each stone a tick or two early or late.
+export const PICTURE_SPREAD = 14;
+
+// The machine runs on a tick. Every part starts moving on one, travels to a
+// fixed stop in a whole number of them, and waits there.
+export const TICK = 1000 / 12;
+// A piston's stops are whole notches of this many pixels.
+export const NOTCH = 1.3;
+// A stone lifts this far out of its socket, clear of the mortar and its neighbours, before it turns over.
+export const POP = 5.8;
+// Lift, turn, seat: one tick each.
+export const TURN_TICKS = 3;
+// The clock's hand is one stone standing this many notches up.
+const HAND = 2;
+// The person's voice works the rings at the outline in pairs, one pair to each two bands of the spectrum.
+const TERRACES = 8;
+// Plato's voice turns stones to its colour ring by ring from the pole, this far over the surface at full
+// voice: up to the clock's ring, which stays the edge of the drawing. An ordinary speaking level already
+// reaches most of the way, so its turn is plain to see.
+const PLATO_REACH = 150;
+const PLATO_GAIN = 1.5;
+// A document is not a part of the machine, and nothing about taking one in runs on the tick: its stones
+// fall, the shell opens, and what is swallowed spreads, each as such things do.
+//
+// A document held near the sphere opens its shell where it faces the document. The opening is not a thing
+// with parts but a place. Round its middle, out to its reach, the shell peels back as a flower opens: every
+// socket there, stone and mortar together, is turned about the line square to the way to the middle, the
+// more the nearer the middle it lies, so the shell curls up and out and the hollow inside shows. The middle
+// follows the document over the surface; the reach (pixels of surface) and the curl (radians, at the
+// middle) grow as it comes near; and neither the rim nor the curl is the same all the way round, or from
+// one moment to the next.
+export const MOUTH = { cracked: 20, wide: 47 }, CURL = { cracked: .7, wide: 2.2 };
+// How quickly the middle follows the document (milliseconds), how quickly the opening grows and how quickly
+// it shuts (radians a millisecond), and how soon each of those swings dies away.
+const FOLLOWS = 130, OPENS = .014, SHUTS = .034, SETTLE = .58, SETTLE_SHUT = .95;
+// The sphere leans its face this far (radians) towards a document that is close, and nods as it swallows.
+const LEAN = .15, LEANS = .009, NOD = .0009;
+// In the hand, each stone of the sheet follows the pointer in its own time (milliseconds, quickest and slowest).
+const TRAIL = [34, 96];
+// Dropped, every stone of the sheet starts for the opening at the same instant and gathers speed as if it
+// were falling into it: a curve by way of the air this far above it, then down the middle of it to its
+// place this far inside. The quickest takes FLY ticks, the slowest SLOWEST more, and none waits for another.
+// A stone is through the shell this far through its fall.
+export const FLY = 4.5, SLOWEST = 2.5;
+const ABOVE = 62, INSIDE = 74, GATHER = 2.3, THROUGH = .9;
+// What the sphere has swallowed spreads through it as a ripple. It leaves the opening the moment the first
+// stone of the sheet goes in: this many pixels of surface a tick at first, slowing as it goes (to half
+// that pace this many pixels out). Each stone in its turn rises out of its socket, rolls right over,
+// pausing with the page's stone outward, and seats again. In ticks: the rise (and the seating), and the roll.
+const SPREAD = 21, SLOWS = 420, RISE = .7, ROLL = 3.4, RIPPLE = RISE + ROLL + RISE;
+// While a document is still being read, the sphere swallows again this often: once the last ripple has gone right round.
+const AGAIN = 46;
+// A sheet first seen comes in from this far beyond where it is held.
+const BEYOND = 280;
+// Each chapter of a document is one stone standing this many notches up; a chapter in the student's focus
+// section stands a notch higher in lapis; the chosen one stands highest, in Plato's colour.
+const PEG_UP = 2, PEG_FOCUS = 3, PEG_CHOSEN = 4;
+// The sphere's attitude has stops too: at rest a little off square, tipped towards a person who is
+// speaking, lifted a little when Plato speaks, and turned one stop towards a pointer.
+const REST_YAW = -.09, REST_PITCH = -.05, LISTEN = .1, SPEAK = -.045, GAZE_YAW = .12, GAZE_PITCH = .08;
+// The board: a frame of stone round Plato's page. Every piece of the shell, its cell of mortar and its stone
+// together, travels out and lays itself flat into a slab facing the viewer, into the band of cells within
+// FRAME_DEPTH of the slab's edge, ring by ring from the pole: the face's middle lands at the top centre and its
+// rings spread down both sides. A ring leaves every BOARD_RING ticks after the one before it and takes
+// BOARD_TRAVEL ticks to get there, coming this far towards the viewer on the way. Landed, each stone turns over
+// to the page's stone; closing, each turns back and then returns, the band's outer rings first. Pieces beyond
+// the band lie in a second layer just behind its outer rows, out of sight.
+export const BOARD_RING = .5, BOARD_TRAVEL = 6, FRAME_DEPTH = 3;
+const BOARD_LIFT = 26, BOARD_BACK = 9;
+// The rings nearest the pole are cut as wedges, too narrow at their pole-ward edge to fill a square cell: on the frame
+// they lie behind its top centre, and the band begins with this ring, the first as square as the rest.
+export const FRAME_FROM = 4;
+// What goes behind the band leaves on the heels of its last ring, this much closer together, so that nothing is still
+// crossing the page long after the band is laid.
+const BACK_PACE = .25;
+// On the frame Plato's colour reaches at most this many rings from the pole: the top of the frame, not all of it.
+const FRAME_REACH = 9;
+// With the shell out as the frame its hollow is open to view: what lies in it goes this far back, beyond any lens.
+const OUT_OF_SIGHT = 1e4;
+
+/**
+ * How a part travels between two stops: at one speed, then stopped dead, with
+ * the smallest of settles. Nothing eases in or out.
+ */
+export function travel(u) {
+  if (u <= 0) return 0;
+  if (u >= 1) return 1;
+  if (u < .8) return u / .8;
+  const settling = (u - .8) / .2;
+  return 1 + .05 * Math.sin(settling * Math.PI) * (1 - settling);
+}
+// Coming down onto a seat there is no settle: a stone must not dip into its socket.
+const seatDown = u => Math.min(1, Math.max(0, u / .8));
+
+// One voice: its loudness measured against the speaker's own range, the shape
+// of its spectrum, and the moments that spectrum changes, where syllables begin.
+function createVoice(contrast) {
+  const BUCKETS = 24, BUCKET = 250;
+  const quiet = new Float32Array(BUCKETS).fill(1), usual = new Float32Array(BANDS), shape = new Float32Array(BANDS);
+  let level = 0, floor = 0, ceiling = .55, bucket = 0, bucketEnds = -Infinity, change = 0, rising = false, onset = false;
+
+  function push(bands, scalar, now, dt) {
+    let target = 0;
+    onset = false;
+    if (bands) {
+      let loudness = 0, flux = 0;
+      for (let band = 0; band < BANDS; band++) {
+        const value = clamp(bands[band]);
+        loudness += value;
+        // How far this instant stands above the sound of the last moment.
+        flux += Math.max(0, value - usual[band]);
+        usual[band] = follow(usual[band], value, dt, 60);
+      }
+      loudness /= BANDS;
+      change = flux / BANDS / (loudness + .1);
+      // The room's own hum sets the gate: the quietest moment of the last six seconds.
+      if (now >= bucketEnds) { bucket = (bucket + 1) % BUCKETS; quiet[bucket] = 1; bucketEnds = now + BUCKET; }
+      if (loudness < quiet[bucket]) quiet[bucket] = loudness;
+      let quietest = 1;
+      for (let index = 0; index < BUCKETS; index++) if (quiet[index] < quietest) quietest = quiet[index];
+      quietest = Math.min(.2, quietest);
+      floor = follow(floor, quietest, dt, quietest < floor ? 120 : 900);
+      // Measured against this speaker's own recent loudest moment, a soft voice works the machine like a loud one.
+      ceiling = Math.max(loudness, follow(ceiling, floor + .55, dt, 4000));
+      target = Math.pow(clamp((loudness - floor - .1) / (ceiling - floor - .1)), contrast);
+      for (let band = 0; band < BANDS; band++) {
+        const share = clamp((clamp(bands[band]) - floor - .1) / (ceiling - floor - .1));
+        shape[band] = follow(shape[band], share, dt, share > shape[band] ? 25 : 140);
+      }
+    } else {
+      const before = level;
+      target = Math.pow(clamp(((Number.isFinite(scalar) ? scalar : 0) - .03) / .3), .8);
+      change = Math.max(0, target - before) * .5;
+      shape.fill(target);
+    }
+    level = follow(level, target, dt, target > level ? 30 : 110);
+    // A syllable begins where the change rises through its threshold.
+    const above = change > .04;
+    if (above && !rising && target > .12) onset = true;
+    rising = above;
+  }
+  function reset() { quiet.fill(1); usual.fill(0); shape.fill(0); level = floor = change = 0; ceiling = .55; bucketEnds = -Infinity; rising = onset = false; }
+  return { push, reset, shape, level: () => level, onset: () => onset };
+}
+
+/**
+ * The sphere as a machine of stone. Its parts are rigid and could be built:
+ *
+ *   rings   every course is a ring carrying its own stones and mortar. A ring
+ *           turns about the axis through the poles in whole places, to a detent.
+ *   stones  every stone has two sides. It can stand up out of its socket as a
+ *           piston, to a whole number of notches; or lift clear, turn over, and
+ *           seat again, to show its other side. The side in the socket is the
+ *           only one that is ever exchanged.
+ *   the sphere itself, which turns between a few fixed attitudes.
+ *
+ * Nothing changes colour in place, nothing drifts, and nothing moves except
+ * from one stop to another on the tick.
+ *
+ *   not connected  grey sides out, rings out of register, still.
+ *   connecting     a lock being dialled: groups of rings click round, seeking.
+ *   going live     the rings find register from the pole outward, and behind
+ *                  that the stones turn over to colour in a cascade.
+ *   quiet          a clock: one ring outside the drawing steps one place a
+ *                  second, carrying one raised stone round as its hand.
+ *   Plato          its stones turn to its colour ring by ring from the pole,
+ *                  one ring to each step of loudness, and each syllable
+ *                  ratchets those rings one place and back.
+ *   a person       the rings at the outline turn to their colour and stand up
+ *                  as pistons, a pair of rings to each part of the spectrum, a
+ *                  notch to each step of loudness; each syllable knocks one
+ *                  ring after another, in to the centre.
+ *   a document     is a sheet of pale stones in the hand. Held near, the shell
+ *                  cracks open where it faces the sheet: pieces of it, stones
+ *                  and mortar together, swing out on their far edges, wider
+ *                  the nearer the sheet comes, and the hollow inside shows.
+ *                  Dropped, the sheet's stones shoot in one after another and
+ *                  the pieces snap shut. What was swallowed then spreads: from
+ *                  the crack outward every stone turns to the page's stone and
+ *                  back. Last, one stone to a chapter turns to the page's stone
+ *                  for good and stands up on its own ring, clockwise from the
+ *                  top; the chosen one turns to Plato's colour and stands higher.
+ *
+ * `tiles`, `sway`, `dial` and `shell` are all the renderer is given.
+ */
+export function createSphereMotion(field) {
+  const { count, radius, course, courseArc, places, normal, frame, seat, theta, sockets } = field;
+  const sheet = field.sheet.count, socketOf = field.socket;
+  // The sphere's own stones, and after them the stones of a document's sheet.
+  const tiles = new Float32Array((count + sheet) * STRIDE), sway = new Float32Array(9), dial = new Float32Array(COURSES);
+  // Every socket's piece of the shell: at rest, no turn and no shift.
+  const shell = { carried: new Float32Array(sockets.count * CELL_STRIDE), changed: 0 };
+  for (let socket = 0; socket < sockets.count; socket++) shell.carried[socket * CELL_STRIDE + 3] = 1;
+  const courseAt = arc => courseArc.reduce((best, at, k) => Math.abs(at - arc) < Math.abs(courseArc[best] - arc) ? k : best, 0);
+  // The last ring a viewer can see, the rings Plato can reach, and the clock's ring just outside the drawing.
+  const LIMB = courseAt(Math.PI * radius / 2 - PITCH / 2), PLATO = courseAt(PLATO_REACH), CLOCK = courseAt(FACE_ARC + 1.5 * PITCH), KNOCK = LIMB - 2 * TERRACES;
+  // The ring the chapters' stones stand on: on the face, clear of the clock.
+  const PEGS = CLOCK + 3;
+  const lag = k => Math.floor(Math.min(k, LIMB + 8) / 3), lagOut = k => k <= LIMB ? (LIMB - k) >> 1 : 0;
+
+  // Stones: the two sides, which is out, when it began to turn, and its place in a cascade.
+  const sideA = new Uint8Array(count), sideB = new Uint8Array(count), parity = new Uint8Array(count), turnTick = new Int32Array(count).fill(-1), stagger = new Uint8Array(count);
+  const angle = new Float32Array(count), height = new Float32Array(count), shown = new Uint8Array(count);
+  // The crack: which piece of the broken shell each socket belongs to (none, when the shell is whole),
+  // and the crack itself: its middle, its pieces, and how wide it means to stand.
+  const peeled = new Uint8Array(sockets.count), ringCos = new Float64Array(COURSES), ringSin = new Float64Array(COURSES), lean = new Float64Array(4);
+  let mouth = null, hungry = false, near = 0;
+  // Where on the sphere the document faces it (in the sphere's own space), and the sphere's attitude and its undoing.
+  const faced = new Float64Array([0, 0, 1]), pose = new Float64Array([0, 0, 0, 1]), unposed = new Float64Array([0, 0, 0, 1]);
+  // The sheet: where its middle is held (as the camera sees it), where each of its stones is and how it
+  // is turned (in the sphere's own space), and where each began its flight and when.
+  const held = new Float64Array(sheet * 3), sheetPlace = new Float64Array(sheet * 3), sheetTurn = new Float64Array(sheet * 4);
+  const flightFrom = new Float64Array(sheet * 3), flightTurn = new Float64Array(sheet * 4), flightBegan = new Float64Array(sheet).fill(-1), flightLasts = new Float64Array(sheet).fill(FLY);
+  const flightTo = new Float64Array([0, 0, 1]);
+  let sheetIs = 'inside', sheetLeft = -999, heldFor = 0;
+  for (let stone = 0; stone < sheet; stone++) { settle(stone, [0, 0, 1], sheetPlace, stone * 3); sheetTurn[stone * 4 + 3] = 1; }
+  // What has been swallowed, spreading: when it reaches each stone, and which stones it is rolling over just now.
+  const spreadAt = new Float32Array(count).fill(-1), rippling = new Uint8Array(count);
+  let spreadTick = -999, spreadFrom = null, studying = false;
+  // Chapters: which chapter a stone stands for, and each chapter's stone and its stops, like the clock's hand.
+  const pegOf = new Int8Array(count).fill(-1);
+  let pegStones = [], pegNow = [], pegFrom = [], pegTo = [], pegTick = [], pegBorn = -999, chosen = -1, focused = new Set();
+  let taking = null, taken = null;
+  // The board: its slab (in the camera's space), when it began to open or close, and which cell each piece takes.
+  let board = null;
+  // A picture shown on the face: its colour for each stone (or -1, a stone it does not reach), when it
+  // was given, and when each stone's turn to show it comes. The colour of each side of each stone.
+  let picture = null;
+  const pictureAt = new Float32Array(count), colourA = new Float32Array(count).fill(-1), colourB = new Float32Array(count).fill(-1);
+  const boardCell = new Int32Array(sockets.count), boardDepart = new Float32Array(sockets.count), boardReturn = new Float32Array(sockets.count);
+  const boardTurn = new Float64Array(4), boardAxis = new Float64Array(3), boardPlace = new Float64Array(3), boardV = new Float64Array(3), boardU = new Float64Array(3);
+  // The order pieces are dealt to the band: ring by ring from FRAME_FROM, and round each ring by bearing from the top,
+  // left side to right (as the screen sees the face, 0 at the top and the right positive).
+  const bearing = Float64Array.from({ length: sockets.count }, (_, socket) => Math.atan2(sockets.normal[socket * 3], sockets.normal[socket * 3 + 1]));
+  const boardRank = Array.from({ length: sockets.count }, (_, socket) => socket).filter(socket => sockets.course[socket] >= FRAME_FROM).sort((a, b) => sockets.course[a] - sockets.course[b] || bearing[a] - bearing[b]);
+  // Lay out the frame: the slab's band of cells, nearest the top centre first (the inner row first where two share a
+  // bearing), and each ring's share of it left to right as its pieces are, so that none crosses another's way there.
+  // The rest go behind the band's outer rows, each behind the cell nearest its own bearing (the pole's wedges behind
+  // the top centre), and never behind the innermost row, so that no perspective can show one in the hole.
+  function dealBoard(cols, rows) {
+    const cells = [], behind = [];
+    for (let row = 0; row < rows; row++) for (let col = 0; col < cols; col++) {
+      const edge = Math.min(col, row, cols - 1 - col, rows - 1 - row);
+      if (edge >= FRAME_DEPTH) continue;
+      const cell = { index: row * cols + col, edge, bearing: Math.atan2((col - (cols - 1) / 2) * rows, ((rows - 1) / 2 - row) * cols) };
+      cells.push(cell);
+      if (edge < FRAME_DEPTH - 1) behind.push(cell);
+    }
+    cells.sort((a, b) => Math.abs(a.bearing) - Math.abs(b.bearing) || b.edge - a.edge);
+    behind.sort((a, b) => a.bearing - b.bearing);
+    const front = Math.min(cells.length, boardRank.length), last = sockets.course[boardRank[front - 1]];
+    for (let start = 0; start < front;) {
+      let end = start;
+      while (end < front && sockets.course[boardRank[end]] === sockets.course[boardRank[start]]) end++;
+      cells.splice(start, end - start, ...cells.slice(start, end).sort((a, b) => a.bearing - b.bearing));
+      start = end;
+    }
+    for (let socket = 0; socket < sockets.count; socket++) {
+      const k = sockets.course[socket];
+      boardCell[socket] = -1 - behind[Math.min(behind.length - 1, Math.floor(((k < FRAME_FROM ? 0 : bearing[socket]) / TAU + .5) * behind.length))].index;
+      boardDepart[socket] = Math.floor((Math.min(k, last) + Math.max(0, k - last) * BACK_PACE) * BOARD_RING);
+      // Closing, what lies behind leaves at once and the band follows from its outer rings, so none of it waits on them;
+      // the pole's wedges leave with the ring in front of them.
+      boardReturn[socket] = Math.floor(Math.max(0, last - Math.max(k, FRAME_FROM)) * BOARD_RING);
+    }
+    for (let rank = 0; rank < front; rank++) boardCell[boardRank[rank]] = cells[rank].index;
+  }
+  // Where the board stands this instant: 0 is the sphere, 1 the slab, for one piece of the shell.
+  function boardShare(socket, now) {
+    if (!board) return 0;
+    if (board.reduced) return board.open ? 1 : 0;
+    if (board.open) return travel((now - board.at - boardDepart[socket]) / BOARD_TRAVEL);
+    return 1 - travel((now - board.at - TURN_TICKS - boardReturn[socket]) / BOARD_TRAVEL);
+  }
+  // Every piece of the shell, carried between its socket and its cell of the slab.
+  function carryBoard(now) {
+    quatRotate(unposed, [0, 0, 1], boardV); quatRotate(unposed, [0, 1, 0], boardU);
+    let anywhere = false, moving = false;
+    for (let socket = 0; socket < sockets.count; socket++) {
+      const at = socket * CELL_STRIDE, share = boardShare(socket, now);
+      moving ||= share !== 1;
+      if (share <= 0) {
+        if (peeled[socket]) { peeled[socket] = 0; shell.carried.fill(0, at, at + CELL_STRIDE); shell.carried[at + 3] = 1; }
+        continue;
+      }
+      anywhere = true;
+      const k = sockets.course[socket], n = socket * 3, c = Math.cos(dial[k]), sn = Math.sin(dial[k]);
+      // Where the socket is now, with its ring's turn, and which way is up the shell (towards the front pole).
+      const nx = c * sockets.normal[n] - sn * sockets.normal[n + 1], ny = sn * sockets.normal[n] + c * sockets.normal[n + 1], nz = sockets.normal[n + 2];
+      const ux = -(c * sockets.south[n] - sn * sockets.south[n + 1]), uy = -(sn * sockets.south[n] + c * sockets.south[n + 1]), uz = -sockets.south[n + 2];
+      // Its cell of the slab, as the camera sees it, then in the sphere's own space.
+      const cell = boardCell[socket], index = cell < 0 ? -1 - cell : cell, col = index % board.cols, row = Math.floor(index / board.cols);
+      const cx = board.centre[0] + (col - (board.cols - 1) / 2) * PITCH, cy = board.centre[1] + ((board.rows - 1) / 2 - row) * PITCH, cz = board.centre[2] - (cell < 0 ? BOARD_BACK : 0);
+      quatRotate(unposed, [cx, cy, cz], boardPlace);
+      // The turn that lays it flat facing the viewer, its up along the slab's up; and as much of it as it has made.
+      const lay = quatBetween([nx, ny, nz], boardV, boardTurn);
+      const [lx, ly, lz] = quatRotate(lay, [ux, uy, uz]);
+      const twist = Math.atan2((ly * boardU[2] - lz * boardU[1]) * boardV[0] + (lz * boardU[0] - lx * boardU[2]) * boardV[1] + (lx * boardU[1] - ly * boardU[0]) * boardV[2], lx * boardU[0] + ly * boardU[1] + lz * boardU[2]);
+      const whole = quatMul(quatAxis(boardV[0], boardV[1], boardV[2], twist), lay), turnHalf = Math.acos(clamp(whole[3], -1, 1)), turnSine = Math.sin(turnHalf);
+      if (turnSine > 1e-6) { boardAxis[0] = whole[0] / turnSine; boardAxis[1] = whole[1] / turnSine; boardAxis[2] = whole[2] / turnSine; } else boardAxis.fill(0), boardAxis[2] = 1;
+      const q = quatAxis(boardAxis[0], boardAxis[1], boardAxis[2], 2 * turnHalf * Math.min(1, share));
+      // The way there: straight, coming towards the viewer on the way and settling onto the slab.
+      const X = nx * radius, Y = ny * radius, Z = nz * radius, lift = BOARD_LIFT * Math.sin(Math.PI * clamp(share));
+      const px = X + (boardPlace[0] - X) * share + boardV[0] * lift, py = Y + (boardPlace[1] - Y) * share + boardV[1] * lift, pz = Z + (boardPlace[2] - Z) * share + boardV[2] * lift;
+      const [rx, ry, rz] = quatRotate(q, [X, Y, Z]);
+      shell.carried[at] = q[0]; shell.carried[at + 1] = q[1]; shell.carried[at + 2] = q[2]; shell.carried[at + 3] = q[3];
+      shell.carried[at + 4] = px - rx; shell.carried[at + 5] = py - ry; shell.carried[at + 6] = pz - rz;
+      peeled[socket] = 1;
+    }
+    shell.changed++;
+    // Closed and home: the shell is whole again. Open with every piece in its cell, the board is settled.
+    if (!anywhere && !board.open) { mend(); board = null; } else board.settled = board.open && !moving;
+  }
+  let hand = 0;
+  for (let index = 0; index < count; index++) {
+    const round = theta[index] / TAU + 1 + course[index] * .137;
+    stagger[index] = Math.floor((round - Math.floor(round)) * 4);
+    // The hand is the stone of the clock's ring nearest twelve o'clock.
+    if (course[index] === CLOCK && (course[hand] !== CLOCK || Math.abs(theta[index] + Math.PI / 2) < Math.abs(theta[hand] + Math.PI / 2))) hand = index;
+  }
+  // Rings: one place round, where each sits when the machine is not live, the stop it is at, and its piston.
+  const pitch = Float64Array.from(places, held => TAU / Math.max(1, held));
+  const home = Int16Array.from({ length: COURSES }, (_, k) => k === 0 || k === COURSES - 1 ? 0 : Math.floor(hash(k + 1, 7) * 7) - 3);
+  const steps = Int16Array.from(home), wanted = Int16Array.from(home), seek = new Int16Array(COURSES), ratchet = new Int8Array(COURSES);
+  const dialFrom = Float64Array.from(home, (held, k) => held * pitch[k]), dialTo = Float64Array.from(dialFrom), dialTick = new Int32Array(COURSES).fill(-99), dialTicks = new Uint8Array(COURSES).fill(1);
+  const pin = new Uint8Array(COURSES), pinFrom = new Float32Array(COURSES), pinTo = new Float32Array(COURSES), pinTick = new Int32Array(COURSES).fill(-99);
+  const want = new Uint8Array(COURSES), wantTick = new Int32Array(COURSES).fill(-99), cascade = new Uint8Array(COURSES), busy = new Uint16Array(COURSES);
+  const terraceOf = Int8Array.from({ length: COURSES }, (_, k) => k > LIMB ? (k <= LIMB + 3 ? 0 : -1) : k > KNOCK ? (LIMB - k) >> 1 : -1);
+  const notch = new Uint8Array(TERRACES), notchLow = new Uint8Array(TERRACES), greenHold = new Uint8Array(TERRACES), knocks = new Int32Array(8).fill(-999);
+  const heard = createVoice(1.6), spoken = createVoice(1.15);
+  const yaw = new Float64Array(4), pitching = new Float64Array(4), scratch = new Float64Array(3), twist = new Float64Array(4);
+
+  let previous = null, origin = null, done = -1, mode = 'idle', wasLive = false, liveTick = -999, leaveTick = -999, thinkTick = -999;
+  let hearing = 0, mine = 1, heardClick = false, spokenClick = false, attentive = 0, reach = 0, reachLow = 0, nextKnock = 0, clock = 0;
+  let handNow = 0, handFrom = 0, handTo = 0, handTick = -99, gazeX = 0, gazeY = 0;
+  let yawFrom = REST_YAW, yawTo = REST_YAW, pitchFrom = REST_PITCH, pitchTo = REST_PITCH, poseTick = -99;
+
+  // One stone of the chapters' ring for each chapter, clockwise from twelve o'clock.
+  function setPegs(wanted, t) {
+    const total = Math.max(0, Math.min(24, Math.floor(Number(wanted) || 0)));
+    if (total === pegStones.length) return;
+    for (const stone of pegStones) pegOf[stone] = -1;
+    pegStones = []; pegNow = []; pegFrom = []; pegTo = []; pegTick = []; pegBorn = t;
+    for (let peg = 0; peg < total; peg++) {
+      const want = -Math.PI / 2 + peg / total * TAU;
+      let best = -1, near = Infinity;
+      for (let index = 0; index < count; index++) {
+        if (course[index] !== PEGS || pegOf[index] >= 0 || index === hand) continue;
+        const apart = Math.abs(Math.atan2(Math.sin(theta[index] - want), Math.cos(theta[index] - want)));
+        if (apart < near) { near = apart; best = index; }
+      }
+      pegOf[best] = peg; pegStones.push(best); pegNow.push(0); pegFrom.push(0); pegTo.push(0); pegTick.push(-99);
+    }
+  }
+  // Two directions square to a third, and to each other.
+  function square(along) {
+    const flat = Math.abs(along[2]) > .9, ax = flat ? 1 : 0, az = flat ? 0 : 1;
+    let ux = along[1] * az - along[2] * 0, uy = along[2] * ax - along[0] * az, uz = along[0] * 0 - along[1] * ax;
+    const length = Math.hypot(ux, uy, uz); ux /= length; uy /= length; uz /= length;
+    return [[ux, uy, uz], [along[1] * uz - along[2] * uy, along[2] * ux - along[0] * uz, along[0] * uy - along[1] * ux]];
+  }
+  // Where one of the sheet's stones lies inside the sphere once it has gone in along `along`: a loose heap under the crack.
+  function settle(stone, along, out, at) {
+    const [u, v] = square(along), deep = radius - INSIDE - 9 * (stone % 3), aside = (hash(stone + 1, 41) - .5) * 26, across = (hash(stone + 1, 43) - .5) * 26;
+    for (let axis = 0; axis < 3; axis++) out[at + axis] = along[axis] * deep + u[axis] * aside + v[axis] * across;
+  }
+  // Where a socket is just now: its own place, carried round by its ring.
+  function facing(normals, at, k, towards) {
+    const turned = steps[k] * pitch[k], c = Math.cos(turned), sine = Math.sin(turned);
+    return (c * normals[at] - sine * normals[at + 1]) * towards[0] + (sine * normals[at] + c * normals[at + 1]) * towards[1] + normals[at + 2] * towards[2];
+  }
+  // The shell opens where the document faces it. Nothing has moved yet: the opening grows from there.
+  function open() {
+    mouth = {
+      middle: Float64Array.from(taking && taking.depart >= 0 ? flightTo : faced), reach: 0, reaching: 0, curl: 0, curling: 0, shutting: false,
+      // What makes this opening's rim and curl uneven, and not like the last one's.
+      seeds: [5, 7, 9, 11].map(salt => hash(done + 1, salt) * TAU),
+    };
+  }
+  // Shut: every socket is back in the shell, and the shell is whole.
+  function mend() {
+    for (let socket = 0; socket < sockets.count; socket++) if (peeled[socket]) {
+      peeled[socket] = 0;
+      shell.carried.fill(0, socket * CELL_STRIDE, (socket + 1) * CELL_STRIDE); shell.carried[socket * CELL_STRIDE + 3] = 1;
+    }
+    shell.changed++; mouth = null;
+  }
+  // The opening goes after the document over the surface, and grows and curls towards what its nearness asks,
+  // a little past and back, as a thing on a spring does. Shutting is quicker, and ends with a click.
+  function grow(dt, about) {
+    const closing = mouth.shutting || !about, wide = taking ? 1 : smooth(near);
+    const reach = closing ? 0 : MOUTH.cracked + (MOUTH.wide - MOUTH.cracked) * wide, curl = closing ? 0 : CURL.cracked + (CURL.wide - CURL.cracked) * wide;
+    const rate = closing ? SHUTS : OPENS, drag = 2 * (closing ? SETTLE_SHUT : SETTLE) * rate;
+    for (let left = dt; left > 0; left -= 4) {
+      const span = Math.min(4, left);
+      mouth.reaching += (-rate * rate * (mouth.reach - reach) - drag * mouth.reaching) * span; mouth.reach += mouth.reaching * span;
+      mouth.curling += (-rate * rate * (mouth.curl - curl) - drag * mouth.curling) * span; mouth.curl += mouth.curling * span;
+    }
+    if (mouth.reach <= 0 || mouth.curl <= 0 || (closing && (mouth.reach < 1.5 || mouth.curl < .04))) {
+      mouth.reach = mouth.curl = 0; mouth.reaching = Math.max(0, mouth.reaching); mouth.curling = Math.max(0, mouth.curling);
+      if (closing) mouth.reaching = mouth.curling = 0;
+    }
+    // Once the sheet is on its way the middle stays where its stones are aimed.
+    if (!closing && !(taking && taking.depart >= 0)) {
+      for (let axis = 0; axis < 3; axis++) mouth.middle[axis] = follow(mouth.middle[axis], faced[axis], dt, FOLLOWS);
+      const length = Math.hypot(mouth.middle[0], mouth.middle[1], mouth.middle[2]) || 1;
+      mouth.middle[0] /= length; mouth.middle[1] /= length; mouth.middle[2] /= length;
+    }
+  }
+  // Where every socket of the opening is carried to this instant. A socket this side of the rim lies on a
+  // strip of shell that runs from the rim to the middle and has curled up off the sphere; it is turned as
+  // far as the strip has curled where it lies, and carried to its place along the curl.
+  function peel(time) {
+    const m = mouth.middle, [east, north] = square(m), within = Math.cos(Math.min(Math.PI, mouth.reach * 1.3 / radius));
+    let changed = false;
+    for (let k = 0; k < COURSES; k++) { ringCos[k] = Math.cos(steps[k] * pitch[k]); ringSin[k] = Math.sin(steps[k] * pitch[k]); }
+    for (let socket = 0; socket < sockets.count; socket++) {
+      const k = sockets.course[socket], n = socket * 3, at = socket * CELL_STRIDE;
+      const x = ringCos[k] * sockets.normal[n] - ringSin[k] * sockets.normal[n + 1], y = ringSin[k] * sockets.normal[n] + ringCos[k] * sockets.normal[n + 1], z = sockets.normal[n + 2];
+      const towards = x * m[0] + y * m[1] + z * m[2];
+      let carried = false;
+      if (mouth.reach > 0 && towards > within) {
+        const e = x * east[0] + y * east[1] + z * east[2], nn = x * north[0] + y * north[1] + z * north[2], round = Math.atan2(nn, e), flat = Math.hypot(e, nn);
+        const apart = Math.acos(Math.min(1, towards)) * radius;
+        const rim = mouth.reach * (1 + .17 * Math.sin(3 * round + mouth.seeds[0] + time * .0008) + .09 * Math.sin(5 * round + mouth.seeds[1] - time * .0012));
+        if (apart < rim) {
+          const curl = mouth.curl * (1 + .2 * Math.sin(6 * round + mouth.seeds[2]) + .12 * Math.sin(2 * round + mouth.seeds[3] + time * .0017));
+          // How far in from the rim it lies, how tightly the strip is curled, and so how far it is turned.
+          const along = rim - apart, bend = curl / rim, turned = bend * along, own = bend - 1 / radius;
+          // The way from the middle out to it; the rim on that side, the way back in from there, and straight out from there.
+          const dx = flat > 1e-6 ? e / flat : 1, dy = flat > 1e-6 ? nn / flat : 0;
+          const ox = dx * east[0] + dy * north[0], oy = dx * east[1] + dy * north[1], oz = dx * east[2] + dy * north[2];
+          const lie = rim / radius, cl = Math.cos(lie), sl = Math.sin(lie);
+          const upx = cl * m[0] + sl * ox, upy = cl * m[1] + sl * oy, upz = cl * m[2] + sl * oz;
+          const inx = sl * m[0] - cl * ox, iny = sl * m[1] - cl * oy, inz = sl * m[2] - cl * oz;
+          const forward = Math.abs(own) > 1e-7 ? Math.sin(own * along) / own : along, rise = Math.abs(own) > 1e-7 ? (1 - Math.cos(own * along)) / own : 0;
+          const px = upx * radius + forward * inx + rise * upx, py = upy * radius + forward * iny + rise * upy, pz = upz * radius + forward * inz + rise * upz;
+          // The turn is about the line square to the way to the middle: a unit quaternion.
+          const half = turned / 2, sine = Math.sin(half), qw = Math.cos(half);
+          const qx = (m[1] * oz - m[2] * oy) * sine, qy = (m[2] * ox - m[0] * oz) * sine, qz = (m[0] * oy - m[1] * ox) * sine;
+          // And the shift is whatever then brings the socket's own place to its place on the curl.
+          const X = x * radius, Y = y * radius, Z = z * radius;
+          const cx = qy * Z - qz * Y + qw * X, cy = qz * X - qx * Z + qw * Y, cz = qx * Y - qy * X + qw * Z;
+          shell.carried[at] = qx; shell.carried[at + 1] = qy; shell.carried[at + 2] = qz; shell.carried[at + 3] = qw;
+          shell.carried[at + 4] = px - X - 2 * (qy * cz - qz * cy); shell.carried[at + 5] = py - Y - 2 * (qz * cx - qx * cz); shell.carried[at + 6] = pz - Z - 2 * (qx * cy - qy * cx);
+          peeled[socket] = 1; carried = changed = true;
+        }
+      }
+      if (!carried && peeled[socket]) { peeled[socket] = 0; shell.carried.fill(0, at, at + CELL_STRIDE); shell.carried[at + 3] = 1; changed = true; }
+    }
+    if (changed) shell.changed++;
+  }
+  // The sheet's stones all leave the hand at once, each a little quicker or slower than the next, for the opening at `towards`.
+  // Returns when the first of them will be through the shell.
+  function launch(at, towards) {
+    let first = Infinity;
+    for (let stone = 0; stone < sheet; stone++) {
+      flightBegan[stone] = at + hash(stone + 1, 57) * .4; flightLasts[stone] = FLY + hash(stone + 1, 59) * SLOWEST;
+      first = Math.min(first, flightBegan[stone] + flightLasts[stone] * THROUGH);
+    }
+    flightFrom.set(sheetPlace); flightTurn.set(sheetTurn); flightTo.set(towards);
+    sheetIs = 'flying';
+    return first;
+  }
+  // What was swallowed spreads from where it went in, starting at `at`: it reaches each stone when it has
+  // crossed the surface to it, quickly at first and more slowly the further it has come.
+  function spread(at, from) {
+    spreadTick = at; spreadFrom = Float64Array.from(from);
+    for (let index = 0; index < count; index++) if (!rippling[index]) {
+      const far = Math.acos(clamp(facing(normal, index * 3, course[index], from), -1, 1)) * radius;
+      spreadAt[index] = at + (far + far * far / (2 * SLOWS)) / SPREAD;
+    }
+  }
+
+  // Where a stone of the sheet lies in the sheet, laid out as a page: across, and up.
+  const across = stone => (stone % SHEET_ROW - (SHEET_ROW - 1) / 2) * (SHEET_STONE + .8), up = stone => ((sheet / SHEET_ROW - 1) / 2 - Math.floor(stone / SHEET_ROW)) * (SHEET_STONE + .8);
+  // One tick of the machine: decide what every part should be doing and start whatever is free to start.
+  function onTick(t) {
+    const live = mode === 'listening' || mode === 'speaking', present = live && hearing > .08;
+    // The speaking turn is told by the sound, not by the provider's mode, which flickers between words.
+    const speaking = live && spoken.level() > .1;
+    if (live && !wasLive) { liveTick = t; clock = 0; seek.fill(0); }
+    if (!live && wasLive) leaveTick = t;
+    if (mode === 'thinking' && thinkTick < 0) thinkTick = t;
+    if (mode !== 'thinking') { thinkTick = -999; if (!live) seek.fill(0); }
+    wasLive = live;
+    attentive = present ? 10 : Math.max(0, attentive - 1);
+
+    // Plato: loudness is a number of rings. The front moves one ring a tick; a syllable is a click of the ratchet.
+    // On the frame it starts from the first ring that shows there.
+    const least = board ? FRAME_FROM + 1 : 3, aim = speaking ? Math.max(least, Math.round(Math.min(1, spoken.level() * PLATO_GAIN) * (board ? FRAME_REACH : PLATO))) : 0;
+    if (aim > reach) { reach = Math.max(reach + 1, board ? least : 0); reachLow = 0; } else if (aim < reach) { if (!speaking || ++reachLow >= 2) reach--; } else reachLow = 0;
+    for (let k = 0; k < COURSES; k++) ratchet[k] = k >= reach || k === 0 ? 0 : spokenClick && speaking ? (ratchet[k] ? 0 : k & 1 ? -1 : 1) : ratchet[k];
+    spokenClick = false;
+
+    // A person: each pair of rings follows its part of the spectrum, a notch to a step of loudness.
+    for (let terrace = 0; terrace < TERRACES; terrace++) {
+      const share = present ? Math.max(heard.shape[terrace * 2], heard.shape[terrace * 2 + 1]) * mine : 0;
+      const stop = share > .72 ? 3 : share > .46 ? 2 : share > .2 ? 1 : 0;
+      if (stop >= notch[terrace]) { notch[terrace] = stop; notchLow[terrace] = 0; } else if (++notchLow[terrace] >= 2) { notch[terrace]--; notchLow[terrace] = 0; }
+      greenHold[terrace] = notch[terrace] > 0 ? 6 : Math.max(0, greenHold[terrace] - 1);
+    }
+    if (heardClick && present) { knocks[nextKnock] = t; nextKnock = (nextKnock + 1) % knocks.length; }
+    heardClick = false;
+
+    // Which stone each ring should be showing.
+    for (let k = 0; k < COURSES; k++) {
+      let face = want[k];
+      if (live) {
+        if (t >= liveTick + lag(k) + 2) face = terraceOf[k] >= 0 && greenHold[terraceOf[k]] > 0 ? GREEN : k < reach ? WARM : LIVE;
+      } else if (t >= leaveTick + lagOut(k)) face = GREY;
+      if (face !== want[k]) { cascade[k] = Number(face <= LIVE && want[k] <= LIVE); want[k] = face; wantTick[k] = t; }
+    }
+
+    // A document about. The shell opens where it faces it, once the rings have come to rest, and holds them still while it is open.
+    const about = hungry || Boolean(taking);
+    if (!mouth && about && dialTick.every((began, k) => t - began >= dialTicks[k])) open();
+    if (taking && taking.depart >= 0) {
+      // The ripple leaves as the first stone of the sheet goes in, not after the last.
+      if (!taking.rippled && t + 1 >= taking.ripple) { spread(taking.ripple, flightTo); taking.rippled = true; }
+      // And as the last goes in, the opening shuts behind it.
+      if (taking.shut < 0 && t >= taking.depart + FLY + SLOWEST) {
+        taking.shut = t; sheetIs = 'inside';
+        for (let stone = 0; stone < sheet; stone++) settle(stone, flightTo, sheetPlace, stone * 3);
+      }
+    }
+    if (mouth) {
+      mouth.shutting = Boolean(taking && taking.shut >= 0);
+      // Shut again: the shell is whole, and the document, if there was one, is taken.
+      if ((mouth.shutting || !about) && mouth.reach === 0) {
+        mend();
+        if (taking && taking.shut >= 0) { taken = taking.id; taking = null; }
+      }
+    }
+    // Still being read: the sphere swallows again. Read, and long enough since: it is all taken in.
+    if (spreadTick >= 0 && !taking && t >= spreadTick + AGAIN) { if (studying && spreadFrom) spread(t, spreadFrom); else spreadTick = -999; }
+    // The sheet, let go of without being dropped, is gone once it is out of sight.
+    if (sheetIs === 'leaving' && t >= sheetLeft + 6) { sheetIs = 'inside'; for (let stone = 0; stone < sheet; stone++) settle(stone, [0, 0, 1], sheetPlace, stone * 3); }
+    const boarded = Boolean(board) || Boolean(picture);
+    const marking = pegStones.length > 0 && !taking && !boarded;
+
+    // Stones: finish a turn, or begin one if the stone is seated and its turn has come.
+    busy.fill(0);
+    for (let index = 0; index < count; index++) {
+      const k = course[index];
+      if (turnTick[index] >= 0) {
+        if (t - turnTick[index] < TURN_TICKS) { busy[k]++; continue; }
+        parity[index] ^= 1; turnTick[index] = -1;
+      }
+      const peg = pegOf[index], seated = pin[k] === 0 && t - pinTick[k] >= 1 && (index !== hand || (handNow === 0 && t - handTick >= 1)) && (peg < 0 || (pegNow[peg] === 0 && t - pegTick[peg] >= 1));
+      // What has been swallowed rolls each stone over to the page's stone and back as it passes. While it has a
+      // stone the machine leaves that stone alone; just before it arrives, the side in the socket becomes the page's stone.
+      if (rippling[index]) { if (t < spreadAt[index] + RIPPLE) { busy[k]++; continue; } rippling[index] = 0; }
+      else if (spreadTick >= 0 && peg < 0 && index !== hand && t < spreadAt[index] && t + 1 >= spreadAt[index]) {
+        if (parity[index]) sideA[index] = PAGE; else sideB[index] = PAGE;
+        rippling[index] = 1; busy[k]++; continue;
+      }
+      // A chapter's stone keeps the page's stone once the ripple has reached it; the chosen chapter's shows
+      // Plato's colour instead. On the frame a stone is the page's stone, or Plato's colour where his voice
+      // reaches, and nothing else turns it. Otherwise a stone shows what its ring is showing.
+      const reached = spreadTick < 0 || t >= spreadAt[index];
+      const onBoard = Boolean(board) && (board.open ? t >= board.at + boardDepart[socketOf[index]] + BOARD_TRAVEL : t < board.at + boardReturn[socketOf[index]]);
+      const pictured = !board && picture && picture.colours[index] >= 0 && t >= picture.at + pictureAt[index];
+      const wish = onBoard ? (want[k] === WARM || want[k] === GREEN ? want[k] : PAGE) : pictured ? PICTURE : peg >= 0 && marking && reached ? (peg === chosen && live ? WARM : focused.has(peg) && live ? LIVE : PAGE) : want[k];
+      const tint = pictured ? picture.colours[index] : -1;
+      if ((parity[index] ? sideB[index] : sideA[index]) === wish && (parity[index] ? colourB[index] : colourA[index]) === tint) continue;
+      busy[k]++;
+      if (!seated || (wish === want[k] && t - wantTick[k] < (cascade[k] ? stagger[index] : 0))) continue;
+      // The side in the socket is exchanged out of sight; the turn that follows shows it.
+      if (parity[index]) { sideA[index] = wish; colourA[index] = tint; } else { sideB[index] = wish; colourB[index] = tint; }
+      turnTick[index] = t;
+    }
+    // Chapters: each stone stands up once it shows the right side, one after another round the ring.
+    for (let peg = 0; peg < pegStones.length; peg++) {
+      const stone = pegStones[peg], wish = peg === chosen && live ? WARM : focused.has(peg) && live ? LIVE : PAGE;
+      const ready = marking && (spreadTick < 0 || t >= spreadAt[stone]) && turnTick[stone] < 0 && (parity[stone] ? sideB[stone] : sideA[stone]) === wish && t >= pegBorn + TURN_TICKS + peg;
+      const stop = ready ? (peg === chosen ? PEG_CHOSEN : focused.has(peg) ? PEG_FOCUS : PEG_UP) : 0;
+      if (stop !== pegNow[peg] && t - pegTick[peg] >= 1) { pegFrom[peg] = pegNow[peg] * NOTCH; pegNow[peg] = stop; pegTo[peg] = stop * NOTCH; pegTick[peg] = t; }
+    }
+
+    // Connecting, two groups of three rings are dialled at a time: the group stands up a notch,
+    // clicks round four places, seats, and the next groups take their turn.
+    const since = t - thinkTick, beat = since % 12, groups = Math.ceil((LIMB + 3) / 3);
+    const first = mode === 'thinking' ? Math.floor(since / 12) % groups : -1, second = first < 0 ? -1 : (first + (groups >> 1)) % groups;
+
+    // Pistons: a ring whose stones are all seated on the right side may stand up, to a whole notch.
+    for (let k = 0; k < COURSES; k++) {
+      let stop = 0;
+      const group = k > 0 && k < LIMB + 3 ? Math.floor(k / 3) : -2;
+      if ((group === first || group === second) && beat < 9 && !busy[k] && !boarded) stop = 1;
+      if (live && !busy[k] && !boarded) {
+        if (terraceOf[k] >= 0 && want[k] === GREEN) stop = notch[terraceOf[k]];
+        if (k <= KNOCK) for (let index = 0; index < knocks.length; index++) if (t - knocks[index] === KNOCK - k) stop = Math.max(stop, 1);
+      }
+      if (stop !== pin[k] && t - pinTick[k] >= 1) { pinFrom[k] = pin[k] * NOTCH; pin[k] = stop; pinTo[k] = stop * NOTCH; pinTick[k] = t; }
+    }
+    const up = live && !boarded && !busy[CLOCK] && want[CLOCK] === LIVE && pin[CLOCK] === 0 ? HAND : 0;
+    if (up !== handNow && t - handTick >= 1) { handFrom = handNow * NOTCH; handNow = up; handTo = up * NOTCH; handTick = t; }
+
+    // Rings: the groups being dialled click one place on every other tick while they stand up.
+    if (mode === 'thinking' && beat < 9 && beat % 2 === 1) for (let k = 1; k < LIMB + 3; k++) { const group = Math.floor(k / 3); if (group === first) seek[k]++; else if (group === second) seek[k]--; }
+    // Quiet or not, the clock's ring steps one place a second.
+    if (live && t > liveTick + lag(CLOCK) + 8 && (t - liveTick) % 12 === 0) clock++;
+    for (let k = 0; k < COURSES; k++) {
+      if (live) { if (t >= liveTick + lag(k)) wanted[k] = k === CLOCK ? clock : ratchet[k]; }
+      else if (mode === 'thinking') wanted[k] = home[k] + seek[k];
+      else if (t >= leaveTick + 8 + lagOut(k)) wanted[k] = home[k];
+      // A ring cannot turn through a break in the shell: every ring waits until it is whole again.
+      if (steps[k] !== wanted[k] && t - dialTick[k] >= dialTicks[k] && !about && !mouth && !boarded) {
+        dialTicks[k] = Math.abs(wanted[k] - steps[k]) > 1 ? 2 : 1;
+        dialFrom[k] = steps[k] * pitch[k]; steps[k] = wanted[k]; dialTo[k] = steps[k] * pitch[k]; dialTick[k] = t;
+      }
+    }
+
+    // The sphere's own attitude, one stop to the next.
+    // A picture holds the face where it was when the picture was laid on it; the board faces the viewer squarely.
+    const yawAim = picture && !board ? yawTo : board ? REST_YAW : REST_YAW + GAZE_YAW * gazeX, pitchAim = picture && !board ? pitchTo : board ? REST_PITCH : REST_PITCH + GAZE_PITCH * gazeY + (attentive ? LISTEN : speaking ? SPEAK : 0);
+    if ((yawAim !== yawTo || pitchAim !== pitchTo) && t - poseTick >= 2) { yawFrom = yawTo; pitchFrom = pitchTo; yawTo = yawAim; pitchTo = pitchAim; poseTick = t; }
+  }
+
+  // Reduced motion: every part already on the stop its state calls for, and nothing on its way anywhere.
+  function rest() {
+    const live = mode === 'listening' || mode === 'speaking';
+    heard.reset(); spoken.reset(); knocks.fill(-999); notch.fill(0); greenHold.fill(0); ratchet.fill(0); seek.fill(0); busy.fill(0);
+    hearing = attentive = reach = clock = handNow = handFrom = handTo = gazeX = gazeY = 0; heardClick = spokenClick = false;
+    wasLive = live; liveTick = live ? done - 999 : -999; leaveTick = -999; thinkTick = -999;
+    if (mouth) mend();
+    taking = null; hungry = false; spreadTick = -999; spreadFrom = null; flightBegan.fill(-1); heldFor = 0; rippling.fill(0); lean.fill(0);
+    if (sheetIs !== 'inside') { sheetIs = 'inside'; for (let stone = 0; stone < sheet; stone++) settle(stone, [0, 0, 1], sheetPlace, stone * 3); }
+    for (let k = 0; k < COURSES; k++) {
+      steps[k] = wanted[k] = live ? 0 : home[k]; dialFrom[k] = dialTo[k] = steps[k] * pitch[k]; dialTick[k] = pinTick[k] = wantTick[k] = -99;
+      pin[k] = 0; pinFrom[k] = pinTo[k] = 0;
+      want[k] = !live ? GREY : mode === 'speaking' && k < Math.round((board?.open ? FRAME_REACH : PLATO) * .6) ? WARM : LIVE;
+    }
+    for (let index = 0; index < count; index++) {
+      const tint = !board && picture ? picture.colours[index] : -1, face = want[course[index]];
+      sideA[index] = board?.open ? (face === WARM || face === GREEN ? face : PAGE) : tint >= 0 ? PICTURE : face; colourA[index] = board?.open ? -1 : tint;
+      sideB[index] = GREY; colourB[index] = -1; parity[index] = 0; turnTick[index] = -1;
+    }
+    // The chapters' stones are already standing in the page's stone, the chosen one in Plato's colour; on the frame, seated in it.
+    pegStones.forEach((stone, peg) => {
+      if (!board?.open) sideA[stone] = peg === chosen && live ? WARM : focused.has(peg) && live ? LIVE : PAGE;
+      pegNow[peg] = board?.open ? 0 : peg === chosen ? PEG_CHOSEN : focused.has(peg) ? PEG_FOCUS : PEG_UP; pegFrom[peg] = pegTo[peg] = pegNow[peg] * NOTCH; pegTick[peg] = -99;
+    });
+    yawFrom = yawTo = REST_YAW; pitchFrom = pitchTo = REST_PITCH; poseTick = handTick = -99;
+  }
+
+  // Where every part is at this instant, between its last stop and its next.
+  function compose(now) {
+    for (let k = 0; k < COURSES; k++) dial[k] = dialFrom[k] + (dialTo[k] - dialFrom[k]) * travel((now - dialTick[k]) / dialTicks[k]);
+    const handHeight = handTo >= handFrom ? handFrom + (handTo - handFrom) * travel(now - handTick) : handFrom + (handTo - handFrom) * seatDown(now - handTick);
+    const moving = (now - poseTick) / 2;
+    quatAxis(0, 1, 0, yawFrom + (yawTo - yawFrom) * travel(moving), yaw);
+    quatAxis(1, 0, 0, pitchFrom + (pitchTo - pitchFrom) * travel(moving), pitching);
+    // And it leans its face a little towards a document that is close.
+    const leaning = Math.hypot(lean[0], lean[1]);
+    quatMul(quatAxis(-lean[1], lean[0], 0, leaning, twist), quatMul(yaw, pitching, pose), pose);
+    quatToMat3(pose, sway);
+    quatConjugate(pose, unposed);
+    if (board) carryBoard(now);
+    let ring = -1, cz = 1, sz = 0, c1 = 1, s1 = 0, piston = 0;
+    for (let index = 0; index < count; index++) {
+      const k = course[index], at = index * STRIDE, n = index * 3, f = index * 4;
+      if (k !== ring) {
+        ring = k; cz = Math.cos(dial[k] / 2); sz = Math.sin(dial[k] / 2); c1 = cz * cz - sz * sz; s1 = 2 * sz * cz;
+        piston = pinTo[k] >= pinFrom[k] ? pinFrom[k] + (pinTo[k] - pinFrom[k]) * travel(now - pinTick[k]) : pinFrom[k] + (pinTo[k] - pinFrom[k]) * seatDown(now - pinTick[k]);
+      }
+      // Up as a piston; or lifted clear, turned over about its meridian, and seated.
+      let lifted = index === hand ? Math.max(piston, handHeight) : piston, over = parity[index] * Math.PI;
+      const peg = pegOf[index];
+      if (peg >= 0) lifted = piston + (pegTo[peg] >= pegFrom[peg] ? pegFrom[peg] + (pegTo[peg] - pegFrom[peg]) * travel(now - pegTick[peg]) : pegFrom[peg] + (pegTo[peg] - pegFrom[peg]) * seatDown(now - pegTick[peg]));
+      if (turnTick[index] >= 0) {
+        const since = now - turnTick[index];
+        lifted = Math.max(lifted, since < 1 ? travel(since) * POP : since < 2 ? POP : (1 - seatDown(since - 2)) * POP);
+        if (since >= 1) over += (since < 2 ? travel(since - 1) : 1) * Math.PI;
+      }
+      // The ripple: up out of its socket, right over with a pause while the page's stone is outward, and down. All of it gently.
+      if (rippling[index]) {
+        const since = now - spreadAt[index];
+        if (since > 0 && since < RIPPLE) {
+          const rolling = (since - RISE) / ROLL;
+          lifted = Math.max(lifted, POP * (since < RISE ? smooth(since / RISE) : since < RISE + ROLL ? 1 : 1 - smooth((since - RISE - ROLL) / RISE)));
+          if (rolling > 0) over += (rolling < .5 ? smooth(rolling * 2) : 1 + smooth(Math.min(1, rolling * 2 - 1))) * Math.PI;
+        }
+      }
+      angle[index] = over; height[index] = lifted; shown[index] = Math.cos(over) >= 0 ? sideA[index] : sideB[index];
+      // The ring's turn about the axis through the poles, then the stone's own.
+      const bx = frame[f], by = frame[f + 1], bz = frame[f + 2], bw = frame[f + 3];
+      const qx = cz * bx - sz * by, qy = cz * by + sz * bx, qz = cz * bz + sz * bw, qw = cz * bw - sz * bz;
+      const cg = over === 0 ? 1 : Math.cos(over / 2), sg = over === 0 ? 0 : Math.sin(over / 2);
+      tiles[at + TURN] = qx * cg - qz * sg;
+      tiles[at + TURN + 1] = qw * sg + qy * cg;
+      tiles[at + TURN + 2] = qx * sg + qz * cg;
+      tiles[at + TURN + 3] = qw * cg - qy * sg;
+      const out = radius + seat[index] + lifted;
+      tiles[at + PLACE] = (c1 * normal[n] - s1 * normal[n + 1]) * out;
+      tiles[at + PLACE + 1] = (s1 * normal[n] + c1 * normal[n + 1]) * out;
+      tiles[at + PLACE + 2] = normal[n + 2] * out;
+      tiles[at + PLACE + 3] = Math.min(1, lifted / 2.6);
+      tiles[at + FACES] = sideA[index]; tiles[at + FACES + 1] = sideB[index]; tiles[at + FACES + 2] = colourA[index]; tiles[at + FACES + 3] = colourB[index];
+      // A stone set in a socket of the opening goes where the socket goes: the socket's turn after its own, and its shift.
+      const socket = socketOf[index];
+      if (peeled[socket]) {
+        const h = socket * CELL_STRIDE, hx = shell.carried[h], hy = shell.carried[h + 1], hz = shell.carried[h + 2], hw = shell.carried[h + 3];
+        const tx = tiles[at + TURN], ty = tiles[at + TURN + 1], tz = tiles[at + TURN + 2], tw = tiles[at + TURN + 3];
+        tiles[at + TURN] = hw * tx + hx * tw + hy * tz - hz * ty;
+        tiles[at + TURN + 1] = hw * ty - hx * tz + hy * tw + hz * tx;
+        tiles[at + TURN + 2] = hw * tz + hx * ty - hy * tx + hz * tw;
+        tiles[at + TURN + 3] = hw * tw - hx * tx - hy * ty - hz * tz;
+        const px = tiles[at + PLACE], py = tiles[at + PLACE + 1], pz = tiles[at + PLACE + 2];
+        const cx = hy * pz - hz * py + hw * px, cy = hz * px - hx * pz + hw * py, cz2 = hx * py - hy * px + hw * pz;
+        tiles[at + PLACE] = px + 2 * (hy * cz2 - hz * cy) + shell.carried[h + 4];
+        tiles[at + PLACE + 1] = py + 2 * (hz * cx - hx * cz2) + shell.carried[h + 5];
+        tiles[at + PLACE + 2] = pz + 2 * (hx * cy - hy * cx) + shell.carried[h + 6];
+      }
+    }
+    // The sheet's stones: in the hand, in flight, or lying inside.
+    for (let stone = 0; stone < sheet; stone++) {
+      const at = (count + stone) * STRIDE, p = stone * 3, q = stone * 4;
+      if (sheetIs === 'held' || sheetIs === 'leaving') {
+        // Where it has got to, as the camera sees it, and a little out of true.
+        scratch[0] = held[p]; scratch[1] = held[p + 1]; scratch[2] = held[p + 2];
+        quatRotate(unposed, scratch, scratch);
+        sheetPlace[p] = scratch[0]; sheetPlace[p + 1] = scratch[1]; sheetPlace[p + 2] = scratch[2];
+        quatMul(unposed, quatAxis(0, 0, 1, (hash(stone + 1, 53) - .5) * .16, twist), twist);
+        sheetTurn.set(twist, q);
+        if (stone === 0) heldFor++;
+      } else if (sheetIs === 'flying' && flightBegan[stone] >= 0) {
+        // Falling into the crack: slowly at first, then faster and faster, along a curve that ends straight down the middle of it.
+        const gone = clamp((now - flightBegan[stone]) / flightLasts[stone]), fall = Math.pow(gone, GATHER), yet = 1 - fall;
+        settle(stone, flightTo, scratch, 0);
+        for (let axis = 0; axis < 3; axis++) sheetPlace[p + axis] = yet * yet * flightFrom[p + axis] + 2 * yet * fall * flightTo[axis] * (radius + ABOVE) + fall * fall * scratch[axis];
+        quatMul(flightTurn.subarray(q, q + 4), quatAxis(1, .3 + .4 * hash(stone + 1, 61), 0, fall * 5.2, twist), twist);
+        sheetTurn.set(twist, q);
+      }
+      tiles[at + TURN] = sheetTurn[q]; tiles[at + TURN + 1] = sheetTurn[q + 1]; tiles[at + TURN + 2] = sheetTurn[q + 2]; tiles[at + TURN + 3] = sheetTurn[q + 3];
+      tiles[at + PLACE] = sheetPlace[p]; tiles[at + PLACE + 1] = sheetPlace[p + 1]; tiles[at + PLACE + 2] = sheetPlace[p + 2]; tiles[at + PLACE + 3] = 1;
+      if (board && sheetIs === 'inside') tiles[at + PLACE + 2] = -OUT_OF_SIGHT;
+      tiles[at + FACES] = PAGE; tiles[at + FACES + 1] = PAGE;
+    }
+  }
+
+  // `gaze` is where a moving pointer is, from -1 to 1 across the sphere's surroundings, or null.
+  // `file` is a document held over the page: { at, aim, near }. `at` is where its sheet is held and `aim`
+  // the way from the sphere's centre to where on the sphere it faces, both as the camera sees them (x right,
+  // y up, z towards the viewer); `near` is how near it is, from 0 to 1. `intake` is { id, at, aim } from the
+  // moment a document is dropped. `chapters` and `chapter` are how many chapters the document in hand has
+  // and which is chosen; `reading` is whether it is still being read.
+  // The order a picture is turned in: by how far each stone lies from the middle of the face as it is seen now.
+  function showPicture(image, at) {
+    if (!image) { picture = null; return; }
+    let far = 0;
+    const off = new Float32Array(count);
+    for (let index = 0; index < count; index++) {
+      if (image.colours[index] < 0) continue;
+      const tx = tiles[index * STRIDE + PLACE], ty = tiles[index * STRIDE + PLACE + 1], tz = tiles[index * STRIDE + PLACE + 2];
+      const x = sway[0] * tx + sway[3] * ty + sway[6] * tz, y = sway[1] * tx + sway[4] * ty + sway[7] * tz;
+      off[index] = Math.hypot(x, y); far = Math.max(far, off[index]);
+    }
+    for (let index = 0; index < count; index++) pictureAt[index] = Math.floor(off[index] / (far || 1) * PICTURE_SPREAD) + Math.floor(hash(index + 1, 71) * 3);
+    picture = { id: image.id, colours: image.colours, at };
+  }
+
+  // `image` is { id, colours } (colours: one packed colour per stone of the sphere, -1 where the picture does not
+  // reach) or null; a new id turns the face over to it, null turns it back.
+  function step({ state, level = 0, input = null, output = null, time, reduced = false, gaze = null, file = null, intake = null, chapters = 0, chapter = -1, focus = [], reading = false, slab = null, image = null, instant = false } = {}) {
+    const now = Number.isFinite(time) ? time : previous || 0;
+    const dt = previous === null ? 16 : Math.max(0, Math.min(80, now - previous));
+    previous = now;
+    if (origin === null) origin = now;
+    mode = state;
+    setPegs(chapters, done + 1);
+    chosen = chapter; studying = Boolean(reading);
+    if (focus.length !== focused.size || focus.some(f => !focused.has(f))) focused = new Set(focus);
+    // The board: `slab` is { open, cols, rows, centre } with `centre` in the camera's space, or null.
+    if (slab?.open && !board?.open) {
+      if (!board || board.cols !== slab.cols || board.rows !== slab.rows) dealBoard(slab.cols, slab.rows);
+      board = { open: true, at: instant ? -1e9 : done + 1, cols: slab.cols, rows: slab.rows, centre: Float64Array.from(slab.centre), reduced }; // instant: a page back after a reload, its frame already laid
+    } else if (board?.open && !slab?.open) board = { ...board, open: false, at: done + 1, reduced };
+    else if (board && slab?.open) {
+      // A slab that changes shape while open is dealt again where it stands.
+      if (board.cols !== slab.cols || board.rows !== slab.rows) { dealBoard(slab.cols, slab.rows); board.cols = slab.cols; board.rows = slab.rows; }
+      board.centre.set(slab.centre); board.reduced = reduced;
+    }
+    if (board && reduced) board.reduced = true;
+    if ((image?.id ?? null) !== (picture?.id ?? null)) showPicture(image, done + 1);
+    if (reduced) { if (intake && intake.id !== taken) taken = intake.id; rest(); origin = now - (done + 1) * TICK; compose(done + 1); return; }
+    const dropped = intake && intake.id !== taken ? intake : null, about = file || dropped;
+    if (dropped && !taking) taking = { id: dropped.id, depart: -1, shut: -1 };
+    // The instant it is let go (and there is a crack to fall into), every stone of the sheet starts for it.
+    if (taking && taking.depart < 0 && sheetIs === 'held' && heldFor > 0 && mouth) {
+      taking.depart = (now - origin) / TICK; taking.ripple = launch(taking.depart, mouth.middle); taking.rippled = false;
+      // It nods towards what it is about to swallow.
+      if (about) { lean[2] += about.aim[0] * NOD; lean[3] += about.aim[1] * NOD; }
+    }
+    hungry = Boolean(file);
+    if (about) {
+      quatRotate(unposed, about.aim, faced);
+      const length = Math.hypot(faced[0], faced[1], faced[2]) || 1;
+      faced[0] /= length; faced[1] /= length; faced[2] /= length;
+      near = file ? clamp(file.near) : 1;
+    }
+    // The sheet is where the document is held, laid out as a page. First seen, it comes in from beyond there.
+    // Each stone follows the hand in its own time, so the sheet trails and gathers as it is moved, and none
+    // of them is ever quite still. Let go of without being dropped, they go back the way they came.
+    if (about && sheetIs !== 'flying' && !(taking && taking.depart >= 0)) {
+      if (sheetIs !== 'held') {
+        const far = Math.hypot(about.at[0], about.at[1]), ox = far > 1 ? about.at[0] / far : 0, oy = far > 1 ? about.at[1] / far : -1;
+        for (let stone = 0; stone < sheet; stone++) {
+          const beyond = BEYOND * (1 + hash(stone + 1, 55) * .5);
+          held[stone * 3] = about.at[0] + across(stone) + ox * beyond; held[stone * 3 + 1] = about.at[1] + up(stone) + oy * beyond; held[stone * 3 + 2] = about.at[2];
+        }
+        sheetIs = 'held'; heldFor = 0;
+      }
+      for (let stone = 0; stone < sheet; stone++) {
+        const lag = TRAIL[0] + (TRAIL[1] - TRAIL[0]) * hash(stone + 1, 63), at = stone * 3;
+        held[at] = follow(held[at], about.at[0] + across(stone) + .7 * Math.sin(now * .0031 + stone * 2.1), dt, lag);
+        held[at + 1] = follow(held[at + 1], about.at[1] + up(stone) + .9 * Math.sin(now * .0037 + stone * 1.3), dt, lag);
+        held[at + 2] = follow(held[at + 2], about.at[2] + 1.2 * Math.sin(now * .0043 + stone * 1.7), dt, lag);
+      }
+    } else if (sheetIs === 'held' && !taking) { sheetIs = 'leaving'; sheetLeft = done; }
+    if (sheetIs === 'leaving') for (let stone = 0; stone < sheet; stone++) {
+      const at = stone * 3, far = Math.hypot(held[at], held[at + 1]) || 1, haste = dt * (1.8 + hash(stone + 1, 65) * 1.4);
+      held[at] += held[at] / far * haste; held[at + 1] += held[at + 1] / far * haste;
+    }
+    // The opening follows the document, as wide as it is near; and the sphere leans a little towards it.
+    if (mouth) { grow(dt, Boolean(about)); peel(now); }
+    const leanX = about && !(taking && taking.shut >= 0) ? about.aim[0] * LEAN * smooth(near) : 0, leanY = about && !(taking && taking.shut >= 0) ? about.aim[1] * LEAN * smooth(near) : 0;
+    for (let left = dt; left > 0; left -= 4) {
+      const span = Math.min(4, left);
+      lean[2] += (-LEANS * LEANS * (lean[0] - leanX) - 1.4 * LEANS * lean[2]) * span; lean[0] += lean[2] * span;
+      lean[3] += (-LEANS * LEANS * (lean[1] - leanY) - 1.4 * LEANS * lean[3]) * span; lean[1] += lean[3] * span;
+    }
+    const live = state === 'listening' || state === 'speaking';
+    heard.push(live ? input : null, live && !input && state === 'listening' ? level : 0, now, dt);
+    spoken.push(live ? output : null, live && !output && state === 'speaking' ? level : 0, now, dt);
+    // The assistant’s own voice in the room must not read as someone answering.
+    mine = 1 - .85 * spoken.level(); hearing = heard.level() * mine;
+    // A syllable is held until the next tick takes it.
+    if (heard.onset()) heardClick = true;
+    if (spoken.onset()) spokenClick = true;
+    // A pointer turns the sphere one stop towards it, and it must come well back before the sphere does.
+    const stop = (held, where) => where === null ? 0 : where > (held > 0 ? .25 : .4) ? 1 : where < (held < 0 ? -.25 : -.4) ? -1 : 0;
+    gazeX = stop(gazeX, gaze ? gaze.x : null); gazeY = stop(gazeY, gaze ? gaze.y : null);
+    // After a long gap (a hidden tab) the machine picks up where it stopped rather than racing to catch up.
+    let at = (now - origin) / TICK;
+    if (Math.floor(at) - done > 36) { origin = now - (done + 36) * TICK; at = (now - origin) / TICK; }
+    while (done < Math.floor(at)) onTick(++done);
+    compose(at);
+  }
+
+  return {
+    step, tiles, sway, dial, shell,
+    // For the tests: every stone's turn, height above its seat and outward side; every ring's stop and piston; and the named parts.
+    angle, height, shown, sideA, sideB, steps, pin, want, pitch, home, peeled,
+    parts: { limb: LIMB, plato: PLATO, clock: CLOCK, knock: KNOCK, hand, terraceOf, pegs: PEGS },
+    tick: () => done,
+    // The stone standing for each chapter; the crack, while there is one; where the sheet is; and the last document swallowed.
+    pegs: () => pegStones,
+    // The board: null when the sphere is whole; otherwise whether it is open, and its slab.
+    board: () => board,
+    // The picture on the face: null, or { id, colours, at }; and each side's colour, for the tests.
+    picture: () => picture, colourA, colourB,
+    mouth: () => mouth,
+    sheet: () => sheetIs,
+    taken: () => taken,
+  };
+}

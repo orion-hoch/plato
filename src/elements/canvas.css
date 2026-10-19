@@ -1,0 +1,11 @@
+/* A frame to draw in (Canvas.jsx): only faint hairlines, so the learner's ink is what stands out; two plain axes;
+   boxes with their labels small and muted at the top left. The reference, once shown, sits beside it. */
+.element-canvas{display:flex;flex-wrap:wrap;gap:20px;align-items:flex-start}
+.canvas-frame{position:relative;flex:1 1 300px;height:min(360px,60vh);min-height:220px;border-radius:10px}
+.canvas-frame.is-blank,.canvas-frame.is-boxes{border:1px dashed var(--line-2)}
+.canvas-frame.is-axes::before{content:'';position:absolute;left:8%;top:5%;bottom:10%;border-left:1px solid var(--line-2)}
+.canvas-frame.is-axes::after{content:'';position:absolute;left:8%;right:4%;bottom:10%;border-bottom:1px solid var(--line-2)}
+.canvas-box{position:absolute;border:1px solid var(--line-2);border-radius:6px}
+.canvas-box-label{position:absolute;left:8px;top:5px;font:500 12px/1.3 var(--sans);color:var(--faint)}
+.canvas-reference{flex:1 1 260px;min-width:0;animation:page-in .35s ease-out both}
+@media(prefers-reduced-motion:reduce){.canvas-reference{animation:none}}

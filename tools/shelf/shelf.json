@@ -1,0 +1,59 @@
+[
+  {
+    "file": "smiles-drawer.js",
+    "global": "SmilesDrawer",
+    "version": "2.4.1",
+    "license": "MIT",
+    "for": "chemical structures in 2D from SMILES (skeletal formulas, stereo wedges, rings, charges); SmilesDrawer.parse + SvgDrawer/SmiDrawer"
+  },
+  {
+    "file": "3dmol.js",
+    "global": "$3Dmol",
+    "version": "2.5.5",
+    "license": "BSD-3-Clause",
+    "for": "molecules and proteins in 3D (ball-and-stick, orbitals as surfaces), rotatable; $3Dmol.createViewer, addModel from xyz/sdf/pdb text"
+  },
+  {
+    "file": "jsxgraph.js",
+    "global": "JXG",
+    "version": "1.14.0",
+    "license": "MIT or LGPL-3.0",
+    "for": "interactive geometry and function graphs with draggable points and sliders (constructions, vectors, slope fields); JXG.JSXGraph.initBoard",
+    "css": "jsxgraph.css"
+  },
+  {
+    "file": "vexflow.js",
+    "global": "VexFlow",
+    "version": "5.0.0",
+    "license": "MIT",
+    "for": "music notation (staves, notes, chords, key and time signatures)"
+  },
+  {
+    "file": "cytoscape.js",
+    "global": "cytoscape",
+    "version": "3.34.4",
+    "license": "MIT",
+    "for": "networks and graphs laid out automatically (pathways, state machines, dependency graphs)"
+  },
+  {
+    "file": "d3.js",
+    "global": "d3",
+    "version": "7.9.0",
+    "license": "ISC",
+    "for": "any custom data figure: scales, axes, shapes, force layouts, trees, maps from GeoJSON given inline"
+  },
+  {
+    "file": "matter.js",
+    "global": "Matter",
+    "version": "0.20.0",
+    "license": "MIT",
+    "for": "2D rigid-body physics you can run and drag (collisions, springs, pendulums, inclines)"
+  },
+  {
+    "file": "function-plot.js",
+    "global": "functionPlot",
+    "version": "1.26.0",
+    "license": "MIT",
+    "for": "function graphs with zoom and pan (y = f(x), parametric, implicit, derivatives shown)"
+  }
+]
