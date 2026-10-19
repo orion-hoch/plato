@@ -50,7 +50,13 @@ This was a new course on a fresh data folder: "MUS 1101 Music Theory", one page 
   - 2 test lessons, judged 10/9/9 and 10/8/9 (accuracy, completeness, teaching).
 - **Kit:** the build chose a staff-notation kit (VexFlow) without being told to. After the figures-folder fix it drew its 6 examples and passed its check. I checked the pictures by hand (interval, E♭ major signature in bass clef, vii° triad, deceptive cadence) and they are right.
 - **Live:** Plato answered on ChatGPT in a few seconds and wrote boards. Asked for a deceptive cadence, he drew it with the kit, correctly. The chat and board came back after a reload.
-- **Not yet run on Claude in this repo:** the course build and kits. The lab's OChem test ran the same prompts on Claude; the runner and fences here are new. I skipped it so it wouldn't compete with live study on the same Claude plan.
+## Full test on Claude (19 Oct)
+
+This was a fresh `git clone` and `npm run setup -- --provider claude`, then `npm start` on an empty data folder. The course was "BIO 1500 Introductory Genetics", from one page of notes.
+- **Build:** 15 minutes from upload to done, with 4 units, 33 topics, all audited, and 2 practice exams. The test lessons were judged 10/6/8 and 9/8/8.
+- **Kit:** a pedigree kit (sexes, affected, carriers, the consanguinity double line, deceased, proband, genotype boxes to fill in). The checker fixed crowded genotype boxes. I checked two examples by hand (X-linked recessive from an affected father, a first-cousin mating) and both are right.
+- **Live:** Plato drew the pedigree with the kit and explained why the pattern is autosomal recessive.
+- **Known cosmetic flaw:** a kit's frame can leave empty space under the figure.
 
 ## Should fix for beta
 

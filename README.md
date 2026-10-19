@@ -37,6 +37,21 @@ npm start            # then open http://127.0.0.1:5188
 4. **Voice, if you want it.** Press the speaker or microphone button (top right) and paste an ElevenLabs API key. Plato then reads his replies aloud and hears what you say, on your ElevenLabs account. The key is checked with ElevenLabs and kept in your macOS Keychain (elsewhere, in a file only your account can read). It never goes in a project file and is never shown again. Right-click either button to replace or remove it.
 5. **Add more files any time.** Choose "What is this?" to tell Plato what a file is. Marking it as closest to your exam rebuilds the practice exams on its model.
 
+## Example
+
+Two test courses, each made from one page of notes:
+
+- **Music theory, on ChatGPT.** "MUS 1101", with the goal "Quiz 1 next week on intervals, triads, key signatures and cadences".
+  - Plato built 4 units with 28 topics, and 2 practice exams, in about 26 minutes.
+  - On its own, it decided the subject needed staff notation and built a notation kit.
+  - Asked for "a deceptive cadence in C major on a staff", Plato drew G–B–D moving to A–C–E on a treble staff, labelled V and vi.
+- **Introductory genetics, on Claude.** "BIO 1500", with the goal "Quiz 2 next week on Mendelian inheritance, pedigrees and chi-square".
+  - It built 4 units with 33 topics, and 2 practice exams, in 15 minutes.
+  - It built a pedigree-chart kit, with carriers, consanguinity lines and genotype boxes students fill in.
+  - Asked about two unaffected parents with an affected daughter, Plato drew the family and explained why the trait must be autosomal recessive.
+
+Neither course's material is included here: Plato works from the files you give it.
+
 ## What's optional
 
 `npm run setup` reports what it could set up. Plato says so, and draws another way, when something is missing.
