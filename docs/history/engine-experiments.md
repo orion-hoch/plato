@@ -256,7 +256,7 @@ Can smaller parallel parts beat the single 24–48 s card call (15–35 s more w
 
 ## Files
 
-All in the scratchpad's `engines/` folder (`/private/tmp/claude-501/-Users-orionhoch-Desktop-study/f99c890b-e324-4c8a-b230-00cb01019671/scratchpad/engines/`):
+All in the scratchpad's `engines/` folder (`<scratch>/engines/`):
 
 | File | What it does |
 |---|---|

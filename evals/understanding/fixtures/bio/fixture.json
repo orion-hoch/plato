@@ -4,7 +4,7 @@
   "domain": "biology (conceptual: few answers compute; beliefs are structured, not executable)",
   "source": {
     "kind": "sandbox",
-    "sandbox": "/private/tmp/claude-501/-Users-orionhoch-Desktop-study/f99c890b-e324-4c8a-b230-00cb01019671/scratchpad/study-sbx",
+    "sandbox": "<scratch>/study-sbx",
     "examId": "exam_UBDoKYKDXBis3ZdF",
     "note": "The Study pipeline's sandbox, where its bio course was built from this fixture's files (source/, fetched by fetch.mjs); --fresh-sandbox retakes the copy. Without it: kind 'files' with dir 'source' and run --build-fixture.",
     "dir": "source",

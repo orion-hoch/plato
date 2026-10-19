@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
-"""Plato's ears: Qwen3-ASR 1.7B (8-bit, MLX) on this Mac, loaded once and kept running. The weights are the ones the
-Russian project already downloaded (read only); LUNA_ASR_MODEL points elsewhere.
+"""Plato's ears: Qwen3-ASR 1.7B (8-bit, MLX) on this Mac, loaded once and kept running. LUNA_ASR_MODEL is the folder of its
+weights (default ./models/qwen3-asr-1.7b-8bit). Development only (server /dev/stt).
 
 JSON lines in: {"id", "path"} (a 16 kHz mono WAV). JSON lines out: {"id", "text"} or {"id", "error"}.
 Started by backend/session/stt.mjs.
@@ -14,7 +14,7 @@ import numpy as np
 import soundfile as sf
 from mlx_audio.stt.utils import load
 
-MODEL_PATH = os.environ.get("LUNA_ASR_MODEL", "/Users/orionhoch/Desktop/Russian/backend/runtime/qwen3-asr-1.7b-8bit")
+MODEL_PATH = os.environ.get("LUNA_ASR_MODEL", "./models/qwen3-asr-1.7b-8bit")
 PROMPT = ("Transcribe English exactly as spoken. The speaker is a CS 3410 student talking about computer systems: binary, "
           "hex like 0x40B80000, two's complement, floats and minifloats, C pointers, malloc and free, logic gates, latches "
           "and flip-flops, RISC-V instructions such as lb, lbu, sw, addi, beq, jal and registers like a0, t0, s1, sp.")

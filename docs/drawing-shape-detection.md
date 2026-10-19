@@ -86,7 +86,7 @@ What that means for shapes:
 
 ## Feasibility check
 
-**Setup.** The script is `/private/tmp/claude-501/-Users-orionhoch-Desktop-study/f99c890b-e324-4c8a-b230-00cb01019671/scratchpad/shapes/shapes.mjs`. It is a scratch file; moving it into `evals/` is the first item under "Next" in [What was built](#what-was-built).
+**Setup.** The script is `<scratch>/shapes/shapes.mjs`. It is a scratch file; moving it into `evals/` is the first item under "Next" in [What was built](#what-was-built).
 
 - It builds strokes in the same `{x, y, p}` shape as `src/inputs/ink.mjs`.
 - Lines wobble, pressure varies, and letters and digits are drawn as strokes. Each shape or arrow is followed by its label, in drawing order.
