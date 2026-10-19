@@ -72,7 +72,7 @@ async function serve(dir, { port, env, started, base, intro }) {
   if (await fetch(`${base}/v1/local/principal`, { method: 'POST' }).then(() => true, () => false)) throw Error(`port ${port} is already in use by another server`);
   const out = openSync(path.join(dir, 'server.log'), 'a');
   const server = spawn(process.execPath, ['--no-warnings', '--env-file-if-exists=.env', 'server/index.mjs'],
-    { cwd: ROOT, env: { ...process.env, PORT: String(port), LUNA_DATA_DIR: dir, LUNA_WORKERS: '3', ...env }, stdio: ['ignore', out, out] });
+    { cwd: ROOT, env: { ...process.env, PORT: String(port), PLATO_DATA_DIR: dir, PLATO_WORKERS: '3', ...env }, stdio: ['ignore', out, out] });
   for (const end = Date.now() + 60_000; Date.now() < end; await sleep(500)) {
     if (server.exitCode !== null) break;
     if (await fetch(`${base}/v1/local/principal`, { method: 'POST' }).then(r => r.ok, () => false)) {

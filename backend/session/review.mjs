@@ -7,7 +7,7 @@ const BRIEF = `You check one board (slide) a tutor just wrote on a student's whi
 Reply with exactly OK when there is nothing wrong. Otherwise one line per error: what it says, why it is wrong, and the correct version. Nothing else. Never write the middle dot character; write multiplication as ×.`;
 
 /** The board's errors as lines, or null when it is right (or the check couldn't run). */
-export function reviewBoard({ title = '', text = '', course = '' }, { model = process.env.LUNA_CHECK_MODEL || 'sonnet', timeoutMs = 120_000 } = {}) {
+export function reviewBoard({ title = '', text = '', course = '' }, { model = process.env.PLATO_CHECK_MODEL || 'sonnet', timeoutMs = 120_000 } = {}) {
   if (String(text).trim().length < 60) return Promise.resolve(null); // a heading or a one-liner: nothing to check
   return ask(BRIEF, `${course ? `THE COURSE'S DEFINITIONS AND CONVENTIONS FOR THIS TOPIC:\n${String(course).slice(0, 6000)}\n\n` : ''}THE BOARD:\n${title ? `${title}\n` : ''}${text}`, { model, timeoutMs });
 }
@@ -23,7 +23,7 @@ const ask = (system, input, options) => claude(system, input, options).then(said
 const VERDICT = `You check one exchange between a tutor and a student, for one thing only: when the tutor's reply judges the student's own work (says an answer is right, wrong or partly right, accepts or rejects a step, or grades a proof or an essay), is that judgment correct? Work the student's work out yourself. Reply with exactly OK when the reply judges nothing, or judges correctly, or the misjudgment is trivial. Otherwise one or two lines: what the tutor said, why it is wrong (what is actually right or wrong in the student's work), and the correct verdict. Nothing else. The course's definitions and conventions (when given) are the standard. Never write the middle dot character; write multiplication as ×.`;
 
 /** The tutor's misjudgment of the student's work in `exchange` (the last lines of the conversation, his reply last), or null. */
-export function reviewVerdict({ exchange = '', course = '' }, { model = process.env.LUNA_CHECK_MODEL || 'sonnet', timeoutMs = 120_000 } = {}) {
+export function reviewVerdict({ exchange = '', course = '' }, { model = process.env.PLATO_CHECK_MODEL || 'sonnet', timeoutMs = 120_000 } = {}) {
   if (String(exchange).trim().length < 40) return Promise.resolve(null);
   return ask(VERDICT, `${course ? `THE COURSE'S DEFINITIONS AND CONVENTIONS FOR THIS TOPIC:\n${String(course).slice(0, 6000)}\n\n` : ''}THE EXCHANGE (oldest first; the tutor's reply is last):\n${String(exchange).slice(-8000)}`, { model, timeoutMs });
 }

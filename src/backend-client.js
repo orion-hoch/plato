@@ -6,7 +6,7 @@ let tokenPromise = null;
 export const authHeader = async () => ({ Authorization: `Bearer ${await token()}` });
 async function token() {
   tokenPromise ??= fetch('/v1/local/principal', { method: 'POST' }).then(async r => {
-    if (!r.ok) throw Error('Could not sign in to the local Luna server.');
+    if (!r.ok) throw Error('Could not sign in to the local Plato server.');
     return (await r.json()).token;
   }).catch(error => { tokenPromise = null; throw error; });
   return tokenPromise;

@@ -1,6 +1,6 @@
-# Luna design manifesto
+# Plato design manifesto
 
-> **Status (11 Oct 2026): product principles, still the direction.** "Luna" is now Plato. The board is no longer read-only: it takes ink, elements with tasks, and answer tiles. Grading is now a verifier chain with trust (`backend/understanding/verify.mjs`), not two agreeing checks.
+> **Status (11 Oct 2026): product principles, still the direction.** "Plato" is now Plato. The board is no longer read-only: it takes ink, elements with tasks, and answer tiles. Grading is now a verifier chain with trust (`backend/understanding/verify.mjs`), not two agreeing checks.
 
 **Quick, natural interaction. An active teaching board. Strict mastery rules underneath.**
 

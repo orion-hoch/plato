@@ -10,7 +10,8 @@ import CourseTree, { TreeButton, Courses } from '../CourseTree.jsx';
 import Making from '../Making.jsx';
 import FaceButton from '../Faces.jsx';
 import { SyncStatus } from '../Material.jsx';
-import { speaker } from '../local-voice.js';
+import { speaker } from '../read-aloud.js';
+import VoiceKey from '../VoiceKey.jsx';
 import AgendaStrip, { topicLabel } from '../AgendaStrip.jsx';
 import Notebook, { NotebookButton, KeepButton, fileBoard, refreshSaved, sectionsOf, appended } from '../Notebook.jsx';
 import { ACCEPT } from '../study-material.mjs';
@@ -58,8 +59,11 @@ export default function App() {
   // whether the server can be reached.
   const [log, setLog] = useState(() => first.current?.log || []), [logOpen, setLogOpen] = useState(remembered), [offline, setOffline] = useState(false);
   // First run: the model CLI this install uses isn't signed in (server /setup), so Plato can't answer: say how, in the chat.
-  const [unready, setUnready] = useState('');
-  useEffect(() => { void fetch('/setup').then(r => r.json()).then(st => { if (!st.ok) setUnready(st.provider === 'codex' ? 'Plato isn’t connected to ChatGPT yet: run `codex login` in a terminal, then restart Plato.' : 'Plato isn’t connected to Claude yet: run `claude` in a terminal and log in, then restart Plato.'); }).catch(() => {}); }, []);
+  // Voice (reading aloud, the microphone) needs the student's ElevenLabs API key (src/VoiceKey.jsx): without one its buttons open
+  // the place to paste it; with one, a right-click on either opens it.
+  const [unready, setUnready] = useState(''), [voiceOn, setVoiceOn] = useState(false), [voiceKeyOpen, setVoiceKeyOpen] = useState(false);
+  const voiceOnRef = useRef(false); voiceOnRef.current = voiceOn;
+  useEffect(() => { void fetch('/setup').then(r => r.json()).then(st => { setVoiceOn(Boolean(st.extras?.voice)); if (!st.ok) setUnready(st.provider === 'codex' ? 'Plato isn’t connected to ChatGPT yet: run `codex login` in a terminal, then restart Plato.' : 'Plato isn’t connected to Claude yet: run `claude` in a terminal and log in, then restart Plato.'); }).catch(() => {}); }, []);
   // A document Plato has been handed: its title and chapters, and the chapter being studied.
   const [material, setMaterial] = useState(null);
   const [chapter, setChapter] = useState(-1);
@@ -159,10 +163,11 @@ export default function App() {
   useEffect(() => { const b = bridge.current; if (b?.exam && (page || log.length) && !(page === opened.current.page && log === opened.current.log)) keepView(b.exam.examId, b.session, page, log); }, [page, log]);
   // Talking: off until they turn it on (the button, or Space with nothing typed); the microphone is muted meanwhile.
   const [talkOn, setTalkOn] = useState(false), talking = useRef(false);
-  // In the text chat the same button (and Space) turns reading his replies aloud on and off instead (src/local-voice.js).
+  // In the text chat the same button (and Space) turns reading his replies aloud on and off instead (src/read-aloud.js).
   const textChat = Boolean(VOICE.textOnly), [readAloud, setReadAloud] = useState(speaker.on);
   useEffect(() => speaker.subscribe(setReadAloud), []);
-  const toggleTalk = () => { talking.current = !talking.current; setTalkOn(talking.current); session.current?.setListening?.(talking.current); };
+  // Without a voice key, a click opens the place to paste one (Space alone doesn't).
+  const toggleTalk = event => { if (textChat && !voiceOnRef.current) { if (event?.type === 'click') setVoiceKeyOpen(true); return; } talking.current = !talking.current; setTalkOn(talking.current); session.current?.setListening?.(talking.current); };
   const typer = useRef(null), screen = useRef(null), session = useRef(null), picker = useRef(null), held = useRef(null);
   const naming = useRef(null), pressed = useRef({ at: -Infinity, x: 0, y: 0 });
   const level = useRef(0);
@@ -187,7 +192,7 @@ export default function App() {
   }
   const { context, toAgent, tell, answerAsk, cardIssued, thoughtReady, thoughtUpdated, thoughtProgress, inkChanged, workChanged, handIn, runC, tools, connect, again,
     listenPresence, send, listenKeys, take, putAway, listenFiles } = made.current;
-  // Their words heard in the text chat (src/local-mic.js): their turn, shown and sent as if typed.
+  // Their words heard in the text chat (src/mic.js): their turn, shown and sent as if typed.
   useEffect(() => { const on = ({ detail }) => { if (detail?.text) tell(detail.text); }; addEventListener('plato:heard', on); return () => removeEventListener('plato:heard', on); }, []);
 
   useEffect(() => {
@@ -318,11 +323,12 @@ export default function App() {
       <SyncStatus examId={bridge.current?.exam?.examId} onOpen={() => setTreeOpen(true)}/>
       {courses && <Courses choosing list={courses}/>}
       <AgendaStrip agenda={agenda} topics={topics} onOpen={() => setTreeOpen(true)}/>
-      {textChat && <button className={`round speak-toggle${readAloud ? ' is-on' : ''}`} onClick={() => speaker.toggle()} aria-pressed={readAloud}
+      {textChat && <button className={`round speak-toggle${readAloud ? ' is-on' : ''}${voiceOn ? '' : ' voice-off'}`} onClick={() => voiceOn ? speaker.toggle() : setVoiceKeyOpen(true)} onContextMenu={e => { e.preventDefault(); setVoiceKeyOpen(true); }} aria-pressed={readAloud}
         aria-label={readAloud ? 'Stop reading replies aloud' : 'Read replies aloud'} title={readAloud ? 'Reading replies aloud: press to stop' : 'Read replies aloud'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9v6h4l5 4V5L8 9H4Z" fill="currentColor"/>{readAloud ? <path d="M16 8.5a5 5 0 0 1 0 7M18.5 6a8.5 8.5 0 0 1 0 12" stroke="currentColor" strokeWidth="1.8" fill="none" strokeLinecap="round"/> : <path d="M16.5 9.5l5 5M21.5 9.5l-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round"/>}</svg>
       </button>}
-      <button className={`round talk${talkOn ? ' is-on' : ''}`} onClick={toggleTalk} aria-pressed={talkOn}
+      <VoiceKey open={voiceKeyOpen} onClose={() => setVoiceKeyOpen(false)} onChange={on => { setVoiceOn(on); if (!on) speaker.set(false); }}/>
+      <button className={`round talk${talkOn ? ' is-on' : ''}${textChat && !voiceOn ? ' voice-off' : ''}`} onClick={toggleTalk} onContextMenu={e => { if (textChat) { e.preventDefault(); setVoiceKeyOpen(true); } }} aria-pressed={talkOn}
         aria-label={talkOn ? 'Stop talking (Space)' : 'Talk to Plato (Space)'} title={talkOn ? 'Listening: press to stop (Space)' : 'Press to talk (Space)'}>
         <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 15a3 3 0 0 0 3-3V6a3 3 0 0 0-6 0v6a3 3 0 0 0 3 3Zm5-3a5 5 0 0 1-10 0H5a7 7 0 0 0 6 6.92V21h2v-2.08A7 7 0 0 0 19 12h-2Z" fill="currentColor"/>{!talkOn && <path d="M4 4l16 16" stroke="currentColor" strokeWidth="2" strokeLinecap="round"/>}</svg>
       </button>

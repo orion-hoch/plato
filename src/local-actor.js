@@ -3,8 +3,8 @@
 // notes and turns), Plato's lines out as the SDK reports them, the page's client tools called as the agent calls them.
 import { WAITS_FOR, FACES, WORK_FACES, faceLimit } from '../backend/session/agent.mjs';
 import { asksIn, manyAsks } from '../shared/boards.mjs';
-import { speaker, readAlong } from './local-voice.js';
-import { startRecording, stopRecording } from './local-mic.js';
+import { speaker, readAlong } from './read-aloud.js';
+import { startRecording, stopRecording } from './mic.js';
 import { openCourse } from './tutor-bridge.js';
 import { checkpoint, save } from './checkpoint.js';
 import { authHeader } from './backend-client.js';
@@ -220,8 +220,8 @@ export function localConversation({ speak = false } = {}) {
     };
     const voice = {
       sendUserMessage: text => { if (!/^\[/.test(String(text))) { stopSpeaking(); speaker.stop(); } take(String(text)); return true; }, // their typing cuts him off; the page's own notes ([Thought] …) never do
-      // The talk toggle (Space, the mic button): with a voice, the browser's recognition; in the text chat, a recording heard on
-      // this Mac when it goes off (tap to talk, tap again to send), shown in the chat as listening, then transcribing.
+      // The talk toggle (Space, the mic button): with a voice, the browser's recognition; in the text chat, a recording heard by
+      // ElevenLabs when it goes off (tap to talk, tap again to send), shown in the chat as listening, then transcribing.
       setMicMuted: muted => {
         if (speak) { micOn = !muted; if (micOn) listen(); else hush(); return; }
         if (!muted && !micId) {

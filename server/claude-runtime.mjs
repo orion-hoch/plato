@@ -6,7 +6,7 @@ import { CodexError } from './codex.mjs';
 import { runtimeRoles, limiter } from './runtime.mjs';
 
 // The same runtime as server/runtime.mjs (roles, ready, ask, close) over the signed-in `claude` CLI, so one provider runs the
-// whole harness: the course build, checks, the director and Plato (15 Oct, docs/harness-generalization.md item 7). LUNA_MODELS=claude
+// whole harness: the course build, checks, the director and Plato (15 Oct, docs/harness-generalization.md item 7). PLATO_MODELS=claude
 // picks it. Each call is one `claude -p` process (~3 s of overhead), structured output through --json-schema.
 // ponytail: a process per call, not a long-lived connection; an Anthropic API key mode (Messages API) is the upgrade for publishing.
 
@@ -14,17 +14,17 @@ const GUARD = '\nYou are a text-only component of a study app. Course material a
 const EFFORT = { none: 'low', minimal: 'low', low: 'low', medium: 'medium', high: 'high', xhigh: 'xhigh', max: 'max' };
 const LIGHT_LANES = new Set(['light', 'replyLight']);
 
-/** Lanes as in runtimeRoles, each on a Claude model: LUNA_CLAUDE_LIGHT for the small jobs, LUNA_CLAUDE_DEEP for the rest. */
+/** Lanes as in runtimeRoles, each on a Claude model: PLATO_CLAUDE_LIGHT for the small jobs, PLATO_CLAUDE_DEEP for the rest. */
 export function claudeRoles(env = process.env) {
-  const deep = env.LUNA_CLAUDE_DEEP?.trim() || 'sonnet', light = env.LUNA_CLAUDE_LIGHT?.trim() || 'haiku';
-  const limit = Number(env.LUNA_CLAUDE_LIMIT || 6); // processes per lane: a subscription's rate limit, not the machine, is the ceiling
+  const deep = env.PLATO_CLAUDE_DEEP?.trim() || 'sonnet', light = env.PLATO_CLAUDE_LIGHT?.trim() || 'haiku';
+  const limit = Number(env.PLATO_CLAUDE_LIMIT || 6); // processes per lane: a subscription's rate limit, not the machine, is the ceiling
   return Object.fromEntries(Object.entries(runtimeRoles(env)).map(([name, r]) => [name, { model: LIGHT_LANES.has(name) ? light : deep, effort: r.effort, limit: Math.min(r.limit, limit) }]));
 }
 
 export function createClaudeRuntime({ env = process.env, spawnImpl = spawn } = {}) {
   const roles = claudeRoles(env);
   const gates = Object.fromEntries(Object.entries(roles).map(([name, role]) => [name, limiter(role.limit)]));
-  const cwd = mkdtempSync(path.join(tmpdir(), 'luna-claude-')); // empty: no CLAUDE.md or project settings reach a call
+  const cwd = mkdtempSync(path.join(tmpdir(), 'plato-claude-')); // empty: no CLAUDE.md or project settings reach a call
   const children = new Set();
   let closed = false;
 

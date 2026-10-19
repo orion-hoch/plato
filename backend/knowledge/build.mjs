@@ -291,7 +291,7 @@ export function createBuild(app) {
     const sv = db.must('source_versions', sourceVersionId, scope);
     const file = db.must('source_files', sv.sourceFileId, scope);
     if (file.currentSourceVersionId !== sv.id) return { state: 'stale' };
-    // A guide-backed course (LUNA_KNOWLEDGE=guide): the harness reads the file into its sources and publishes its topics from the
+    // A guide-backed course (PLATO_KNOWLEDGE=guide): the harness reads the file into its sources and publishes its topics from the
     // study guide (backend/lessons/guide-manifest.mjs), so nothing is interpreted and no knowledge build waits on it.
     if (db.get('exams', scope.examId)?.knowledgeSource === 'guide') {
       ctx.commit(() => {
@@ -817,7 +817,7 @@ export function createBuild(app) {
     const scope = build.scope;
     const c = build.candidate;
     const graphReports = db.find('validation_reports', { id: c.graphReportIds }, { scope });
-    // Sandbox only (the user's decision, 8 Oct 2026): with LUNA_PUBLISH_WARNING_REVIEWS=provisional, a needs_review report
+    // Sandbox only (the user's decision, 8 Oct 2026): with PLATO_PUBLISH_WARNING_REVIEWS=provisional, a needs_review report
     // whose issues are all warnings doesn't block; its warnings stay on the manifest as unresolved issues. The live app
     // leaves the setting off, so every needs_review report still blocks there.
     const warningOnly = r => !!config.publishWarningOnlyReviews && r.disposition === 'needs_review' && r.issues?.length > 0 && r.issues.every(i => i.severity !== 'blocking');

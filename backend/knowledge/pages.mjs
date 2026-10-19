@@ -4,9 +4,9 @@ import { openPdf, pdfPageRegions, pageRegions, withTimeout } from './formats.mjs
 import { PAGE_TRANSCRIPT } from './schemas.mjs';
 
 // PDFs as clean markdown (v8). Each page is rendered (a PNG blob, linked from the page's regions and anchors) and
-// transcribed from the image by the model-assisted extraction reader (extractor.transcribe: Luna), with the page's text
+// transcribed from the image by the model-assisted extraction reader (extractor.transcribe: Plato), with the page's text
 // layer as a hint against misreads: code fenced with its language, tables as tables, math as LaTeX, figures as
-// "[Figure: …]". Pages run in parallel, at most LUNA_PAGE_CONCURRENCY (default 4) at a time, inside extract_source; a
+// "[Figure: …]". Pages run in parallel, at most PLATO_PAGE_CONCURRENCY (default 4) at a time, inside extract_source; a
 // finished page is checkpointed, so a retry redoes only the rest. A page that cannot be transcribed keeps its text layer,
 // or, without one, stays an uncertain raster for the region escalation.
 
@@ -15,7 +15,7 @@ const SCALE = 2; // ~1224×1584 px for a letter page: small code and exponents s
 export async function transcribePdf(app, { scope, sv, file, bytes, format, ctx }) {
   const pdf = await withTimeout(openPdf(bytes, format), app.config.uploads.capabilities.parserTimeoutMs);
   const done = { ...(ctx.current.checkpoint?.pages || {}) }, runs = [], issues = [], retry = [], pages = [];
-  const limit = Math.max(1, Number(process.env.LUNA_PAGE_CONCURRENCY) || 4);
+  const limit = Math.max(1, Number(process.env.PLATO_PAGE_CONCURRENCY) || 4);
 
   async function page(n) {
     const text = await pdf.text(n);

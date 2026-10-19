@@ -1,7 +1,7 @@
 import WebSocket from 'ws';
 import { normalizeSpeechAlignment } from '../shared/speech-alignment.mjs';
 
-// Opens while Luna is thinking, then streams speech as clauses arrive.
+// Opens while Plato is thinking, then streams speech as clauses arrive.
 // https://elevenlabs.io/docs/eleven-api/guides/how-to/websockets/realtime-tdd
 export function createSpeechStream({ env = process.env, voice, model = 'eleven_v4_turbo', signal, onAudio, onEnd, onError, onUsage, WebSocketImpl = WebSocket }) {
   const dialogue = /^eleven_v[34]/.test(model);
@@ -57,14 +57,14 @@ export function createSpeechStream({ env = process.env, voice, model = 'eleven_v
   function write(text) {
     if (stopped || finished || ending || !text) return;
     textLength += text.length;
-    if (textLength > 1800) { fail('Luna’s spoken answer was too long. Please ask a shorter question.'); return; }
+    if (textLength > 1800) { fail('Plato’s spoken answer was too long. Please ask a shorter question.'); return; }
     if (dialogue) send({ inputs: [{ text, voice_id: voice, new_turn: false }], flush: true }, text.length);
     else send({ text, flush: true }, text.length);
   }
   function finish() {
     if (stopped || finished || ending) return;
     ending = true;
-    if (!textLength) { fail('Luna returned no spoken answer. Please ask again.'); return; }
+    if (!textLength) { fail('Plato returned no spoken answer. Please ask again.'); return; }
     send(dialogue ? { close_socket: true } : { text: '' });
   }
   if (signal?.aborted) { cancel(); return { write, finish, cancel, timing }; }

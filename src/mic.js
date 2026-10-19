@@ -1,11 +1,11 @@
 // Listening in the text chat (13 Oct, the user: "why doesn't it listen, that's a core component"): the microphone recorded on
-// the page at 16 kHz while the talk button (or Space) is on, sent when it goes off and heard on this Mac (/dev/stt: Qwen3-ASR
-// through mlx-audio), as the Russian project does: tap to talk, tap again to send.
+// the page at 16 kHz while the talk button (or Space) is on, sent when it goes off and heard by ElevenLabs on the student's own
+// API key (server /voice/stt): tap to talk, tap again to send.
+import { authHeader } from './backend-client.js';
 let rec = null;
 
 export async function startRecording() {
   if (rec) return;
-  fetch('/dev/stt').catch(() => {}); // wake the ears while they talk
   const stream = await navigator.mediaDevices.getUserMedia({ audio: { channelCount: 1, echoCancellation: true, noiseSuppression: true, autoGainControl: true } });
   const ctx = new AudioContext({ sampleRate: 16000 }), source = ctx.createMediaStreamSource(stream), node = ctx.createScriptProcessor(4096, 1, 1), chunks = [];
   node.onaudioprocess = e => chunks.push(new Float32Array(e.inputBuffer.getChannelData(0)));
@@ -23,7 +23,7 @@ export async function stopRecording() {
   const samples = new Float32Array(r.chunks.reduce((n, c) => n + c.length, 0));
   let at = 0; for (const c of r.chunks) { samples.set(c, at); at += c.length; }
   if (samples.length < rate * 0.3) return { text: '' };
-  const response = await fetch('/dev/stt', { method: 'POST', headers: { 'Content-Type': 'audio/wav' }, body: wav(samples, rate) }).catch(() => null);
+  const response = await fetch('/voice/stt', { method: 'POST', headers: { 'Content-Type': 'audio/wav', ...await authHeader().catch(() => ({})) }, body: wav(samples, rate) }).catch(() => null);
   if (!response) return { error: 'Couldn’t reach the speech recognizer.' };
   const body = await response.json().catch(() => ({}));
   return response.ok ? { text: String(body.text || '').trim() } : { error: body.error || 'Couldn’t hear that.' };

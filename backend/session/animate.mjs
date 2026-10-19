@@ -45,7 +45,7 @@ export function cachedAnimation(dir, id) {
  * One clip for `about` written to <dir>/<id>.mp4 with its <id>.json: { id, title, about, note }. onStage(text, fraction) at
  * each real step (stepper). No clip at all throws, with the builder's own words why.
  */
-export function buildAnimation({ about, title = '' }, { dir, onStage = () => {}, model = process.env.LUNA_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
+export function buildAnimation({ about, title = '' }, { dir, onStage = () => {}, model = process.env.PLATO_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
   if (!ready()) return Promise.reject(new Error('Manim is not installed: tools/manim/.venv (uv venv --python 3.12; uv pip install manim)'));
   const id = animationId(about), cwd = mkdtempSync(path.join(tmpdir(), 'plato-manim-')), clip = path.join(cwd, 'out.mp4'); // no project files, settings or memory of anyone's
   const step = stepper(onStage);

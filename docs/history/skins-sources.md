@@ -12,4 +12,4 @@ Original generated sprite sheet: `<codex generated_images>/01a0fa73-415e-7373-be
 
 A [CC0 hand-drawn hat pack by roppychop](https://opengameart.org/content/hand-drawn-hat-pack) was evaluated but omitted because its small pixel assets did not fit this interface. It is not a dependency or the source of the shipped hats.
 
-The selection is kept locally under `luna-teacher-hat-v1`. It is decorative, shared across tests on this browser, and does not affect voice processing, uploaded materials or account data.
+The selection is kept locally under `plato-teacher-hat-v1`. It is decorative, shared across tests on this browser, and does not affect voice processing, uploaded materials or account data.

@@ -20,12 +20,12 @@ const GUARD = '\nYou are a text-only component of a study app. Never use tools, 
  */
 export function modelSettings(env = process.env) {
   const pick = (...keys) => keys.map(key => env[key]?.trim()).find(Boolean);
-  const deep = { model: pick('LUNA_DEEP', 'LUNA_HEAVY') || 'gpt-6-astra', effort: pick('LUNA_DEEP_EFFORT', 'LUNA_HEAVY_EFFORT') || 'high' };
+  const deep = { model: pick('PLATO_DEEP', 'PLATO_HEAVY') || 'gpt-6-astra', effort: pick('PLATO_DEEP_EFFORT', 'PLATO_HEAVY_EFFORT') || 'high' };
   return {
-    light: { model: pick('LUNA_LIGHT') || 'gpt-6-luna', effort: pick('LUNA_LIGHT_EFFORT') || 'low' },
+    light: { model: pick('PLATO_LIGHT') || 'gpt-6-luna', effort: pick('PLATO_LIGHT_EFFORT') || 'low' },
     deep,
-    director: { model: pick('LUNA_DIRECTOR', 'LUNA_PLANNER') || deep.model, effort: pick('LUNA_DIRECTOR_EFFORT', 'LUNA_PLANNER_EFFORT') || 'low' },
-    voice: { model: pick('LUNA_VOICE', 'LUNA_AGENT_LLM') || 'gpt-6.1-sol', effort: pick('LUNA_VOICE_EFFORT', 'LUNA_AGENT_EFFORT') || 'low' },
+    director: { model: pick('PLATO_DIRECTOR', 'PLATO_PLANNER') || deep.model, effort: pick('PLATO_DIRECTOR_EFFORT', 'PLATO_PLANNER_EFFORT') || 'low' },
+    voice: { model: pick('PLATO_VOICE', 'PLATO_AGENT_LLM') || 'gpt-6.1-sol', effort: pick('PLATO_VOICE_EFFORT', 'PLATO_AGENT_EFFORT') || 'low' },
   };
 }
 
@@ -35,8 +35,8 @@ export function modelSettings(env = process.env) {
  */
 export function runtimeRoles(env = process.env) {
   const { light, deep, director, voice } = modelSettings(env);
-  // The reply path runs on Codex's Fast tier (`priority`: 1.5–2× speed, more usage); LUNA_REPLY_TIER=default turns it off.
-  const tier = env.LUNA_REPLY_TIER?.trim() || 'priority';
+  // The reply path runs on Codex's Fast tier (`priority`: 1.5–2× speed, more usage); PLATO_REPLY_TIER=default turns it off.
+  const tier = env.PLATO_REPLY_TIER?.trim() || 'priority';
   return {
     // Reply path.
     director: { ...director, tier, limit: 4 }, // the director's card for an answer no branch prepared, and think
@@ -46,7 +46,7 @@ export function runtimeRoles(env = process.env) {
     // The voice's model for the stand-in and the dev-only local actor (ElevenLabs hosts it live). Codex on a ChatGPT account
     // can't run gpt-6.1-sol, so the nearest it can: gpt-6-sol at the voice's effort.
     voice: { ...voice, model: voice.model === 'gpt-6.1-sol' ? 'gpt-6-sol' : voice.model, tier, limit: 2 },
-    actor: { model: deep.model, effort: env.LUNA_ACTOR_EFFORT?.trim() || 'medium', tier, limit: 2 }, // Plato himself on ChatGPT (backend/agents.mjs ask)
+    actor: { model: deep.model, effort: env.PLATO_ACTOR_EFFORT?.trim() || 'medium', tier, limit: 2 }, // Plato himself on ChatGPT (backend/agents.mjs ask)
     check: { model: deep.model, effort: 'medium', limit: 4 }, // a colleague's checks of his boards and verdicts (backend/session/review.mjs)
     // Background.
     heavy: { ...deep, limit: 16 }, // the course build, validators, learner, questions, modules, attach, the course model
@@ -70,7 +70,7 @@ export function createRuntime({ env = process.env, spawnImpl = spawn } = {}) {
   const roles = runtimeRoles(env);
   const gates = Object.fromEntries(Object.entries(roles).map(([name, role]) => [name, limiter(role.limit)]));
   const faults = {};
-  for (const entry of String(env.LUNA_FAULTS || '').split(',').map(x => x.trim()).filter(Boolean)) {
+  for (const entry of String(env.PLATO_FAULTS || '').split(',').map(x => x.trim()).filter(Boolean)) {
     const [lane, kind, value] = entry.split(':');
     if (lane && (kind === 'fail' || kind === 'delay') && Number.isFinite(Number(value))) (faults[lane] ??= {})[kind] = Number(value);
   }
@@ -131,7 +131,7 @@ export function createRuntime({ env = process.env, spawnImpl = spawn } = {}) {
   }
 
   async function start() {
-    directory = await mkdtemp(path.join(tmpdir(), 'luna-runtime-'));
+    directory = await mkdtemp(path.join(tmpdir(), 'plato-runtime-'));
     // Reuse the exec hardening flags, minus model_instructions_file: each thread brings its own instructions.
     const defaults = cliArguments(directory, roles.light.model).slice(0, -1); // only its hardening flags are kept
     const hardening = defaults.slice(defaults.indexOf('--disable')).filter((arg, i, all) => !arg.startsWith('model_instructions_file') && !all[i + 1]?.startsWith('model_instructions_file'));
@@ -150,8 +150,8 @@ export function createRuntime({ env = process.env, spawnImpl = spawn } = {}) {
       for (const line of lines) { try { receive(JSON.parse(line)); } catch { /* Ignore non-JSON lines. */ } }
     });
     child.on('error', () => failAll(new CodexError(503, 'The Codex CLI could not start. Is it installed and signed in?')));
-    child.on('close', code => { if (env.LUNA_DEBUG_RUNTIME) console.error(`codex app-server exited ${code}: ${stderr}`); failAll(new CodexError(503, 'The Codex CLI stopped.')); child = null; starting = null; });
-    await request('initialize', { clientInfo: { name: 'luna_study', version: '0.2.0' }, capabilities: { experimentalApi: true, requestAttestation: false } });
+    child.on('close', code => { if (env.PLATO_DEBUG_RUNTIME) console.error(`codex app-server exited ${code}: ${stderr}`); failAll(new CodexError(503, 'The Codex CLI stopped.')); child = null; starting = null; });
+    await request('initialize', { clientInfo: { name: 'plato', version: '0.2.0' }, capabilities: { experimentalApi: true, requestAttestation: false } });
     send({ method: 'initialized', params: {} });
     // app-server has no --ignore-user-config, so disable every inherited MCP server by name.
     // Never log or return the effective config: it can contain secrets.
@@ -178,10 +178,10 @@ export function createRuntime({ env = process.env, spawnImpl = spawn } = {}) {
   async function askOnce({ role = 'light', instructions, input, schema, onText, signal, timeoutMs = 240_000, effort, images = [] }) {
     const settings = roles[role];
     if (!settings) throw new Error(`Unknown model role: ${role}`);
-    // Dev only: LUNA_FAULTS injects failures or delays per lane, e.g. "director:fail:0.5,replyLight:delay:8000".
+    // Dev only: PLATO_FAULTS injects failures or delays per lane, e.g. "director:fail:0.5,replyLight:delay:8000".
     const fault = faults[role];
     if (fault?.delay) await new Promise(r => setTimeout(r, fault.delay));
-    if (fault?.fail && Math.random() < fault.fail) throw new CodexError(503, `Injected fault on the ${role} lane (LUNA_FAULTS).`);
+    if (fault?.fail && Math.random() < fault.fail) throw new CodexError(503, `Injected fault on the ${role} lane (PLATO_FAULTS).`);
     return gates[role](async () => {
       await ready();
       if (signal?.aborted) throw new CodexError(499, 'Canceled.');

@@ -19,7 +19,7 @@ The projection of a onto a unit vector q is (qᵀa)q. The scalar qᵀa is the co
 Gram-Schmidt gives A = QR. Each entry rᵢⱼ = qᵢᵀaⱼ is the projection coefficient of column aⱼ on qᵢ.`;
 
 async function boot(dir, clock) {
-  const app = createBackend({ dbFile: path.join(dir, 'luna.db'), blobDir: path.join(dir, 'blobs'), clock, providers: createMockProviders({ clock, controls: {} }) });
+  const app = createBackend({ dbFile: path.join(dir, 'plato.db'), blobDir: path.join(dir, 'blobs'), clock, providers: createMockProviders({ clock, controls: {} }) });
   const handle = createHttpHandler(app, { localPrincipalFile: path.join(dir, 'principal.json') });
   const server = createServer(async (req, res) => { if (!await handle(req, res)) { res.writeHead(404); res.end(); } });
   await new Promise(r => server.listen(0, '127.0.0.1', r));
@@ -33,7 +33,7 @@ async function boot(dir, clock) {
 }
 
 test('full flow over HTTP, then restart preserves state', async t => {
-  const dir = mkdtempSync(path.join(tmpdir(), 'luna-mvp-'));
+  const dir = mkdtempSync(path.join(tmpdir(), 'plato-mvp-'));
   const clock = createClock('2026-10-04T12:00:00Z');
   let node = await boot(dir, clock);
   t.after(() => node.close());

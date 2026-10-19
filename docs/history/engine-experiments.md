@@ -132,7 +132,7 @@ Can smaller parallel parts beat the single 24–48 s card call (15–35 s more w
 - **Think:**
   - **T0:** monolithic Astra low, from the engine runs.
   - **T2:** `say` and board in parallel, both Astra low.
-  - **T3:** `say` on Astra low and the board on Luna.
+  - **T3:** `say` on Astra low and the board on Plato.
 - **P5, Claude CLI as the engine of the best protocol:** not run. The budget was spent, and you asked to keep Claude CLI runs few.
 
 ### Results (cards)
@@ -161,7 +161,7 @@ Can smaller parallel parts beat the single 24–48 s card call (15–35 s more w
 |---|---|---|---|---|
 | T0 monolithic | 7.3–10.7 s | 7.3–10.7 s | 2/2 | **5 / 5 / 5** |
 | T2: `say` ∥ board, heavy | 6.6–7.3 s | 8.6–19.0 s | 1/2: showed 64 ones, calling the byte 11111111 | 4.5 / 4.5 / 4.5 |
-| T3: board on Luna | 6.4 s | 6.4 s | 0/1: a 32-bit board claiming 64-bit extension | 1 / 5 / 2 |
+| T3: board on Plato | 6.4 s | 6.4 s | 0/1: a 32-bit board claiming 64-bit extension | 1 / 5 / 2 |
 
 ### What parallelism buys, and what it costs
 
@@ -173,8 +173,8 @@ Can smaller parallel parts beat the single 24–48 s card call (15–35 s more w
   
   The light reconcile dropped 2 of 8 blind branches and missed the rest. Parts must see the decisions they fill in.
 - **Heavy fills don't pay.** The skeleton alone takes 9–18 s, and the heavy board fill is the slowest part (9–16 s; the other fills take 4–7 s), so P1 ends up as slow as P0 with 5 calls instead of 1.
-- **Light fills are fast and fine for branches, but not boards.** Each Luna part takes about 3 s, so P3 is about 30% faster than P0 and the cheapest per card, and its branches are coherent. Its boards were the weakest: a setup-and-hold waveform with its markers off the clock edges, and the 32-bit think board. Boards need the heavy model.
-- **The verifier is nearly free.** In P4 it added at most 1.6 s and passed 4 of 4. Luna wrote 3 of 3 correct checks in 4–6 s. A wrong expected answer would be caught by a machine, not trusted.
+- **Light fills are fast and fine for branches, but not boards.** Each Plato part takes about 3 s, so P3 is about 30% faster than P0 and the cheapest per card, and its branches are coherent. Its boards were the weakest: a setup-and-hold waveform with its markers off the clock edges, and the 32-bit think board. Boards need the heavy model.
+- **The verifier is nearly free.** In P4 it added at most 1.6 s and passed 4 of 4. Plato wrote 3 of 3 correct checks in 4–6 s. A wrong expected answer would be caught by a machine, not trusted.
 - **Elements dominate latency, and they grow with their steps.** A C trace is written step by step by the model:
   - 1 step: 17 s;
   - 5 steps: 38 s alone;

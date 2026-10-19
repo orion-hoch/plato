@@ -13,12 +13,11 @@ import { localActor } from '../backend/session/agent.mjs';
 import { claudeActor } from '../backend/session/claude-actor.mjs';
 import { PROVIDER, signedIn } from '../backend/agents.mjs';
 import { reviewVerdict, verdictNote } from '../backend/session/review.mjs';
-import { speakText, ttsEngine } from '../backend/session/tts.mjs';
-import { transcribe, wakeEars } from '../backend/session/stt.mjs';
 import { BUNDLE as CIRCUIT_BUNDLE, circuitsReady } from '../backend/session/circuit.mjs';
 import { SKILL as ANATOMY_SKILL } from '../backend/session/anatomy.mjs';
 import { ready as manimReady } from '../backend/session/animate.mjs';
 import { SHELF_DIR } from '../backend/lessons/kits.mjs';
+import { createSecrets } from './secrets.mjs';
 import { textOf, addSource, buildCourse, buildDue, buildState, hasGuide, saveNote, notesOf } from '../backend/lessons/build-course.mjs';
 import { publishGuide } from '../backend/lessons/guide-manifest.mjs';
 
@@ -28,13 +27,13 @@ import { publishGuide } from '../backend/lessons/guide-manifest.mjs';
 const root = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
 const production = process.argv.includes('--production');
 const port = Number(process.env.PORT || 5188);
-// LUNA_DATA_DIR runs a second, separate server on a copy of the data (evals/live-session.mjs --sandbox).
-const dataDir = process.env.LUNA_DATA_DIR ? path.resolve(process.env.LUNA_DATA_DIR) : path.join(root, 'data');
+// PLATO_DATA_DIR runs a second, separate server on a copy of the data (evals/live-session.mjs --sandbox).
+const dataDir = process.env.PLATO_DATA_DIR ? path.resolve(process.env.PLATO_DATA_DIR) : path.join(root, 'data');
 const figureDir = path.join(dataDir, 'figures'); // Plato's anatomy figures (backend/session/anatomy.mjs), each a page of its own
 const animationDir = path.join(dataDir, 'animations'); // Plato's Manim clips (backend/session/animate.mjs), <id>.mp4 and <id>.json
 
-// Dev only: LUNA_CLOCK_OFFSET_MS shifts the backend's clock (e.g. 86400000 to test "coming back the next day" in a sandbox).
-const clockOffset = Number(process.env.LUNA_CLOCK_OFFSET_MS || 0);
+// Dev only: PLATO_CLOCK_OFFSET_MS shifts the backend's clock (e.g. 86400000 to test "coming back the next day" in a sandbox).
+const clockOffset = Number(process.env.PLATO_CLOCK_OFFSET_MS || 0);
 const baseClock = createClock();
 const clock = clockOffset ? { ...baseClock, now: () => baseClock.now() + clockOffset, iso: () => new Date(baseClock.now() + clockOffset).toISOString() } : baseClock;
 // The reply path's lanes run on a Codex process of their own: with one process for every lane, live turns waited behind the
@@ -54,12 +53,12 @@ const app = createBackend({
   blobDir: path.join(dataDir, 'blobs'),
   clock,
   providers: createLiveProviders({ runtime, clock }),
-  // New courses publish their topics from their files and study guide (the harness); LUNA_KNOWLEDGE=build: the older knowledge build.
-  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), checkpointDir: path.join(dataDir, 'checkpoints'), figureDir, animationDir, knowledgeSource: process.env.LUNA_KNOWLEDGE === 'build' ? null : 'guide' }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
+  // New courses publish their topics from their files and study guide (the harness); PLATO_KNOWLEDGE=build: the older knowledge build.
+  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), checkpointDir: path.join(dataDir, 'checkpoints'), figureDir, animationDir, knowledgeSource: process.env.PLATO_KNOWLEDGE === 'build' ? null : 'guide' }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
 });
 const api = createHttpHandler(app, { localPrincipalFile: path.join(dataDir, 'local-principal.json') });
 app.jobs.releaseOrphanedLeases();
-app.start({ workers: Number(process.env.LUNA_WORKERS || 16) }); // 2 for the reply path, up to 12 for long builds, the rest for short background work
+app.start({ workers: Number(process.env.PLATO_WORKERS || 16) }); // 2 for the reply path, up to 12 for long builds, the rest for short background work
 // Courses published before the course model went live are studied now (kick skips any that are built or building).
 for (const exam of app.db.find('exams').filter(e => !['deleted', 'deleting'].includes(e.status) && e.publishedKnowledgeManifestId)) {
   try { app.services.understanding.kick({ tenantId: exam.scope.tenantId, learnerId: exam.scope.learnerId, examId: exam.id }); }
@@ -113,7 +112,7 @@ setInterval(tick, 60_000).unref();
 let soon = 0, settled = 0;
 app.events.listen(event => { if (event.eventType !== 'source.finalized') return; clearTimeout(soon); clearTimeout(settled); soon = setTimeout(tick, 3000); settled = setTimeout(tick, SETTLE_MS + 2000); });
 
-// Voice: a short-lived ElevenLabs credential for the private Luna Tutor agent: a WebRTC conversation token, or, for a
+// Voice: a short-lived ElevenLabs credential for the private Plato Tutor agent: a WebRTC conversation token, or, for a
 // conversation in text (no microphone), a signed WebSocket URL, since ElevenLabs closes a text-only WebRTC room about
 // 10 s in. The API key never reaches the browser. Accepts only an empty JSON body from this page, or {"textOnly":true}.
 async function voiceToken(req, res) {
@@ -139,31 +138,65 @@ async function voiceToken(req, res) {
   return true;
 }
 
-// Development only, on this Mac: LUNA_LOCAL_ACTOR=1 adds Plato's spoken voice and hearing (/dev/tts, /dev/stt).
-const localActorOn = !production && process.env.LUNA_LOCAL_ACTOR === '1';
-// Development only, with the local actor: POST /dev/tts { text } → audio/wav, Plato's voice on this Mac (Kokoro through mlx-audio
-// when set up, else macOS say); GET /dev/tts gives { engine }.
-// Development only, with the local actor: POST /dev/stt (a WAV body) → { text }, the student's words heard on this Mac
-// (Qwen3-ASR through mlx-audio); GET /dev/stt starts the model early (the mic just opened).
-async function devStt(req, res) {
-  if (!localActorOn || new URL(req.url, 'http://localhost').pathname !== '/dev/stt') return false;
+// Voice in the text chat, with the student's own ElevenLabs API key, pasted into Plato's voice settings and kept by the system
+// (server/secrets.mjs: the macOS Keychain) or ELEVENLABS_API_KEY in .env; without one, no voice buttons: his replies read aloud
+// (POST /voice/tts { text } → audio/mpeg) and what they say heard (POST /voice/stt, a WAV body → { text }). The key never
+// reaches the browser.
+const secrets = createSecrets(dataDir), ELEVEN = 'https://api.elevenlabs.io/v1';
+const elevenKey = async () => (await secrets.get('elevenlabs-api-key')) || process.env.ELEVENLABS_API_KEY?.trim() || '';
+// GET /settings/voice → { set, hint, where }; POST { key } checks it with ElevenLabs and keeps it; DELETE forgets it.
+async function voiceSettings(req, res) {
+  if (new URL(req.url, 'http://localhost').pathname !== '/settings/voice') return false;
   const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
-  if (req.method === 'GET') { wakeEars(); json(200, { ok: true }); return true; }
   if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) { json(403, { error: 'Only from this page.' }); return true; }
+  if (!signedInPage(req)) { json(401, { error: 'Sign in first.' }); return true; }
+  const stored = await secrets.get('elevenlabs-api-key'), key = stored || process.env.ELEVENLABS_API_KEY?.trim() || '';
+  if (req.method === 'GET') { json(200, { set: Boolean(key), hint: key ? `…${key.slice(-4)}` : '', where: stored ? secrets.where : key ? '.env' : secrets.where }); return true; }
+  if (req.method === 'DELETE') { await secrets.remove('elevenlabs-api-key'); setupSeen = null; json(200, { set: Boolean(process.env.ELEVENLABS_API_KEY?.trim()) }); return true; }
+  if (req.method !== 'POST') { json(405, { error: 'Use GET, POST or DELETE.' }); return true; }
   const parts = []; let size = 0;
-  for await (const part of req) { size += part.length; if (size > 20_000_000) { json(413, { error: 'Too long a recording.' }); return true; } parts.push(part); }
-  try { json(200, { text: await transcribe(Buffer.concat(parts)) }); }
-  catch (error) { json(502, { error: String(error?.message || error).slice(0, 200) }); }
+  for await (const part of req) { size += part.length; if (size > 4096) { json(413, { error: 'Too long.' }); return true; } parts.push(part); }
+  let pasted = ''; try { pasted = String(JSON.parse(Buffer.concat(parts).toString('utf8')).key || '').trim(); } catch { /* none */ }
+  if (!/^[\w-]{20,200}$/.test(pasted)) { json(400, { error: 'That doesn’t look like an ElevenLabs API key.' }); return true; }
+  // A key ElevenLabs says is invalid is refused; one restricted from this check (a scoped key) is kept.
+  const check = await fetch(`${ELEVEN}/user`, { headers: { 'xi-api-key': pasted }, signal: AbortSignal.timeout(15_000) }).then(async r => ({ status: r.status, text: await r.text() }), () => null);
+  if (check?.status === 401 && /invalid_api_key|invalid api key/i.test(check.text)) { json(400, { error: 'ElevenLabs didn’t accept that key.' }); return true; }
+  try { await secrets.set('elevenlabs-api-key', pasted); } catch (error) { json(500, { error: `Couldn’t keep it: ${error.message}` }); return true; }
+  setupSeen = null;
+  json(200, { set: true, hint: `…${pasted.slice(-4)}`, where: secrets.where });
   return true;
 }
-async function devTts(req, res) {
-  if (!localActorOn || new URL(req.url, 'http://localhost').pathname !== '/dev/tts') return false;
-  if (req.method === 'GET') { res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify({ engine: ttsEngine() })); return true; }
-  if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) { res.writeHead(403); res.end(); return true; }
-  const parts = []; for await (const part of req) parts.push(part);
-  let text = ''; try { text = String(JSON.parse(Buffer.concat(parts).toString('utf8') || '{}').text || ''); } catch { /* none */ }
-  try { const wav = await speakText(text); res.writeHead(200, { 'Content-Type': 'audio/wav', 'Cache-Control': 'no-store', 'Content-Length': wav.length }); res.end(wav); }
-  catch (error) { res.writeHead(502, { 'Content-Type': 'application/json' }); res.end(JSON.stringify({ error: String(error?.message || error).slice(0, 200) })); }
+async function voiceRoute(req, res) {
+  const route = new URL(req.url, 'http://localhost').pathname;
+  if (route !== '/voice/tts' && route !== '/voice/stt') return false;
+  const json = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
+  if (req.method !== 'POST') { json(405, { error: 'Use POST.' }); return true; }
+  if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) { json(403, { error: 'Only from this page.' }); return true; }
+  if (!signedInPage(req)) { json(401, { error: 'Sign in first.' }); return true; }
+  const apiKey = await elevenKey();
+  if (!apiKey) { json(503, { error: 'Voice needs your ElevenLabs API key: add it in Plato’s voice settings.' }); return true; }
+  const parts = []; let size = 0;
+  for await (const part of req) { size += part.length; if (size > 20_000_000) { json(413, { error: 'Too long.' }); return true; } parts.push(part); }
+  const body = Buffer.concat(parts), headers = { 'xi-api-key': apiKey };
+  try {
+    if (route === '/voice/tts') {
+      let text = ''; try { text = String(JSON.parse(body.toString('utf8') || '{}').text || '').slice(0, 5000); } catch { /* none */ }
+      if (!text.trim()) { json(400, { error: 'No text.' }); return true; }
+      const voice = process.env.ELEVENLABS_VOICE_ID?.trim() || 'JBFqnCBsd6RMkjVDRZzb';
+      const r = await fetch(`${ELEVEN}/text-to-speech/${encodeURIComponent(voice)}?output_format=mp3_44100_128`, { method: 'POST', headers: { ...headers, 'Content-Type': 'application/json', Accept: 'audio/mpeg' }, body: JSON.stringify({ text, model_id: process.env.PLATO_TTS_MODEL?.trim() || 'eleven_v4_turbo' }), signal: AbortSignal.timeout(30_000) });
+      if (!r.ok) { json(r.status === 401 ? 503 : 502, { error: `ElevenLabs couldn't speak that (${r.status}).` }); return true; }
+      const audio = Buffer.from(await r.arrayBuffer());
+      res.writeHead(200, { 'Content-Type': 'audio/mpeg', 'Content-Length': audio.length, 'Cache-Control': 'no-store' }); res.end(audio);
+    } else {
+      const form = new FormData();
+      form.append('model_id', process.env.PLATO_STT_MODEL?.trim() || 'scribe_v1');
+      form.append('file', new Blob([body], { type: 'audio/wav' }), 'speech.wav');
+      const r = await fetch(`${ELEVEN}/speech-to-text`, { method: 'POST', headers, body: form, signal: AbortSignal.timeout(60_000) });
+      const out = await r.json().catch(() => ({}));
+      if (!r.ok) { json(r.status === 401 ? 503 : 502, { error: `ElevenLabs couldn't hear that (${r.status}).` }); return true; }
+      json(200, { text: String(out.text || '').trim() });
+    }
+  } catch { json(504, { error: 'ElevenLabs didn’t answer in time.' }); }
   return true;
 }
 // The course's part of Plato's brief, with where its study guide's build stands while one is being written (the harness).
@@ -174,7 +207,7 @@ function briefOf(dir) {
   return writing ? `${brief}\n\nTheir study guide is still being written from their material (${st.state === 'planning' ? 'planning its units' : `${st.done?.length || 0} of ${st.units?.length || '?'} units ready`}); until a topic arrives as context, teach from their material itself with look_up and read.`.trim() : brief;
 }
 // A colleague's check of Plato's verdict on their work (backend/session/review.mjs): the page asks after a reply that judges
-// what they wrote, and a real misjudgment comes back as a quiet note for his next turn. LUNA_REVIEW=0 turns it off.
+// what they wrote, and a real misjudgment comes back as a quiet note for his next turn. PLATO_REVIEW=0 turns it off.
 async function checkRoute(req, res) {
   if (new URL(req.url, 'http://localhost').pathname !== '/check') return false;
   const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
@@ -184,7 +217,7 @@ async function checkRoute(req, res) {
   for await (const part of req) { size += part.length; if (size > 64_000) { send(413, { error: 'Too large.' }); return true; } parts.push(part); }
   let body; try { body = JSON.parse(Buffer.concat(parts).toString('utf8') || '{}'); } catch { send(400, { error: 'Invalid JSON.' }); return true; }
   if (!signedInPage(req)) { send(401, { error: 'Sign in first.' }); return true; }
-  if (process.env.LUNA_REVIEW === '0') { send(200, { note: null }); return true; }
+  if (process.env.PLATO_REVIEW === '0') { send(200, { note: null }); return true; }
   const errors = await reviewVerdict({ exchange: String(body.exchange || '').slice(-12_000), course: String(body.course || '').slice(0, 8000) });
   send(200, { note: errors ? verdictNote(errors) : null });
   return true;
@@ -284,7 +317,7 @@ async function setupRoute(req, res) {
   if (req.method !== 'GET' || new URL(req.url, 'http://localhost').pathname !== '/setup') return false;
   if (!setupSeen || Date.now() - setupSeen.at > 60_000) {
     const chrome = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', process.env.CHROME_PATH].some(p => p && existsSync(p));
-    setupSeen = { at: Date.now(), body: { provider: PROVIDER, ...(await signedIn()), extras: { circuits: circuitsReady(), figures: existsSync(path.join(ANATOMY_SKILL, 'SKILL.md')), kits: existsSync(path.join(SHELF_DIR, 'd3.js')), chrome, animations: manimReady() } } };
+    setupSeen = { at: Date.now(), body: { provider: PROVIDER, ...(await signedIn()), extras: { circuits: circuitsReady(), figures: existsSync(path.join(ANATOMY_SKILL, 'SKILL.md')), voice: Boolean(await elevenKey()), kits: existsSync(path.join(SHELF_DIR, 'd3.js')), chrome, animations: manimReady() } } };
   }
   res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(setupSeen.body));
   return true;
@@ -365,15 +398,14 @@ async function serveProduction(req, res) {
 }
 
 const server = createServer(async (req, res) => {
-  if (![`127.0.0.1:${port}`, `localhost:${port}`].includes(req.headers.host)) { res.writeHead(403); res.end('Use the local Luna app address.'); return; }
+  if (![`127.0.0.1:${port}`, `localhost:${port}`].includes(req.headers.host)) { res.writeHead(403); res.end('Use the local Plato app address.'); return; }
   try {
     if (req.url === '/healthz') { res.writeHead(200, { 'Content-Type': 'text/plain', 'Cache-Control': 'no-store' }); res.end('ok'); return; }
     if (await api(req, res)) return;
     if (await voiceToken(req, res)) return;
     if (await checkpoint(req, res) || await materialNote(req, res)) return;
     if (await actorRoute(req, res) || await checkRoute(req, res) || await setupRoute(req, res)) return;
-    if (await devTts(req, res)) return;
-    if (await devStt(req, res)) return;
+    if (await voiceRoute(req, res) || await voiceSettings(req, res)) return;
     if (await figurePage(req, res) || await animationClip(req, res) || await logicSim(req, res) || await shelfFile(req, res)) return;
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
     if (pathname.split(/[\\/]/).includes('data')) { res.writeHead(404); res.end(); return; }

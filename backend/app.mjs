@@ -29,7 +29,7 @@ export function createBackend({ dbFile = ':memory:', blobDir, clock = createCloc
   const db = openDb(dbFile);
   const app = {
     db, clock, config, providers,
-    blobs: createBlobs({ db, dir: blobDir || mkdtempSync(path.join(tmpdir(), 'luna-blobs-')), clock }),
+    blobs: createBlobs({ db, dir: blobDir || mkdtempSync(path.join(tmpdir(), 'plato-blobs-')), clock }),
     events: createEvents({ db, clock }),
     auth: createAuth({ db, clock }),
     services: {},

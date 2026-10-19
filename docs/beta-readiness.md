@@ -4,12 +4,12 @@
 
 So Plato is an app each student installs and runs on their own machine. They connect their own Claude (Claude Code login) or ChatGPT (Codex login) subscription; there's no shared server and no accounts. A closed beta means about 10 to 20 people installing it from the repo and studying their own courses with it.
 
-This plan comes from a code audit of Luna-Study-lab on 19 Oct (file:line evidence is in the session notes). It is ordered by what blocks first.
+This plan comes from a code audit of Plato lab copy on 19 Oct (file:line evidence is in the session notes). It is ordered by what blocks first.
 
 ## What already fits the model
 
 - **Credentials stay with the CLIs.** Plato never sees a key. `server/codex.mjs` passes only HOME/PATH-style variables to `codex`, and `claude` runs on its own login.
-- **Two model providers already exist for the lightweight text calls:** `server/runtime.mjs` (Codex app-server, ChatGPT login) and `server/claude-runtime.mjs` (`LUNA_MODELS=claude`).
+- **Two model providers already exist for the lightweight text calls:** `server/runtime.mjs` (Codex app-server, ChatGPT login) and `server/claude-runtime.mjs` (`PLATO_MODELS=claude`).
 - **Local and contained:**
   - the server binds 127.0.0.1;
   - per-learner scoping in the API;

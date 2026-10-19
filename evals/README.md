@@ -102,7 +102,7 @@ node evals/live-session.mjs missed-arrays --turns 3 --use-elevenlabs            
   - `backend.db` via `VACUUM INTO`, which includes the WAL;
   - `blobs/` and `local-principal.json`.
 
-  It then starts a second server there (`PORT=5199 LUNA_DATA_DIR=<dir> LUNA_WORKERS=3 node server/index.mjs`, in dev
+  It then starts a second server there (`PORT=5199 PLATO_DATA_DIR=<dir> PLATO_WORKERS=3 node server/index.mjs`, in dev
   mode, so `window.__plato` exists) and stops it after the run.
   - The snapshot dir (with its `server.log`) is kept for inspection. Its path is `sandbox.dir` in `run.json`. Delete
     old ones from the OS temp dir (`plato-eval-*`, about 60 MB each).

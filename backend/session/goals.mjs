@@ -45,7 +45,7 @@ export function installGoals(K) {
 
   // ---------- the course model, when one is built (interface A) ----------
 
-  const courseModel = scope => globalThis.process?.env?.LUNA_COURSE_MODEL === 'off' ? null : safe(() => app.services.understanding?.courseModel?.(scope) ?? null, null); // off: evals' ablation
+  const courseModel = scope => globalThis.process?.env?.PLATO_COURSE_MODEL === 'off' ? null : safe(() => app.services.understanding?.courseModel?.(scope) ?? null, null); // off: evals' ablation
   /** Each KC with its leverage (spec §11: 1 + threshold + spine weight + 0.1·dependents), for the learner's priority formula. */
   function candidates(cm) {
     const dependents = new Map(), spineOf = new Map(), threshold = new Set();

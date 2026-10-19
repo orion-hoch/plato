@@ -34,7 +34,8 @@ npm start            # then open http://127.0.0.1:5188
 1. **Make a course.** Open the course panel (bottom left), then choose New course. Give it a name and what you're studying for (for example "Prelim 2 on Nov 12, chapters 9 to 16"), and drop in your files: PDFs, Word, PowerPoint, Markdown or text.
 2. **Plato builds it.** Your files become searchable in seconds. In the background, agents on your subscription plan the units, write and check each one against your material, write practice exams and re-solve them, and build any figure kits the subject needs (molecules for chemistry, staff notation for music, and so on). A typical course is ready in about 20 to 40 minutes, and you can start studying before it finishes.
 3. **Study.** Type to Plato. Ask to be taught a topic, quizzed, or given an exam-style problem. Write on the board with a mouse or pen, and press Enter to hand your work in. Star any section of the board to keep it in your Notebook. Your board, chat and drafts survive reloads and restarts.
-4. **Add more files any time.** Choose "What is this?" to tell Plato what a file is. Marking it as closest to your exam rebuilds the practice exams on its model.
+4. **Voice, if you want it.** Press the speaker or microphone button (top right) and paste an ElevenLabs API key. Plato then reads his replies aloud and hears what you say, on your ElevenLabs account. The key is checked with ElevenLabs and kept in your macOS Keychain (elsewhere, in a file only your account can read). It never goes in a project file and is never shown again. Right-click either button to replace or remove it.
+5. **Add more files any time.** Choose "What is this?" to tell Plato what a file is. Marking it as closest to your exam rebuilds the practice exams on its model.
 
 ## What's optional
 
@@ -47,6 +48,7 @@ npm start            # then open http://127.0.0.1:5188
 | Kit libraries | per-course figure kits | installed by setup, Chrome to check them |
 | Manim | short animations | `--animations`, ffmpeg, LaTeX |
 | C runner | running C code on the board | macOS (it uses the system sandbox) |
+| Voice | replies read aloud, talking to Plato | your ElevenLabs API key, pasted in Plato |
 
 ## Safety
 
@@ -60,7 +62,7 @@ Student code (C, JavaScript checks) runs under the macOS sandbox, with no networ
 
 ## Settings
 
-`.env` (copied from `.env.example` by setup) holds the provider, the port (`PORT`), where data lives (`LUNA_DATA_DIR`), and model choices per provider. Run `npm run dev` for the development server with hot reload.
+`.env` (copied from `.env.example` by setup) holds the provider, the port (`PORT`), where data lives (`PLATO_DATA_DIR`), and model choices per provider. Run `npm run dev` for the development server with hot reload.
 
 ## Status
 

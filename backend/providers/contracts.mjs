@@ -57,14 +57,14 @@ export function unwrap(result) {
 
 /**
  * Model gateway over the Codex runtime: structured JSON output validated against a shape schema.
- * Roles name a lane in server/runtime.mjs (astra = the deep model's background lane, luna = the light one).
+ * Roles name a lane in server/runtime.mjs (astra = the deep model's background lane, plato = the light one).
  */
 export function createModelGateway({ runtime, clock }) {
   // onText (v9): the structured reply's text as it streams, for a caller that reads its fields as they complete.
   async function structuredCall({ role, instructions, input, schema, promptTemplateVersion, configVersion = 'cfg_v1', images = [], signal, timeoutMs, effort, onText }) {
     const startedAt = clock.iso();
     const run = settings => ({ adapter: 'codex-app-server', modelId: settings?.model || 'unknown', modelVersion: null, promptTemplateVersion, configVersion, requestId: newId('req'), startedAt, finishedAt: clock.iso() });
-    const runtimeRole = { astra: 'heavy', luna: 'light' }[role] || role;
+    const runtimeRole = { astra: 'heavy', plato: 'light' }[role] || role;
     try {
       const response = await runtime.ask({ role: runtimeRole, instructions, input, schema: jsonSchema(schema), images, signal, timeoutMs, effort, onText });
       const value = stripNulls(schema, response.json);

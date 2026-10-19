@@ -35,12 +35,12 @@ function claudeFor(args) {
 }
 
 /** Claude's reply streamed: onDelta(text) as it is written; resolves with the whole text. In an empty folder (claudeFor): no
- *  project files, settings or memory of anyone's. LUNA_CLAUDE_EFFORT (low|medium|high): how long it thinks before its first word
+ *  project files, settings or memory of anyone's. PLATO_CLAUDE_EFFORT (low|medium|high): how long it thinks before its first word
  *  (17 Oct: thinking is most of the wait; unset keeps the CLI's default). */
 function claudeStream(system, input, { model, onDelta, timeoutMs }) {
   return new Promise((resolve, reject) => {
     const child = claudeFor(['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose', '--include-partial-messages',
-      '--tools', '', ...(process.env.LUNA_CLAUDE_EFFORT ? ['--effort', process.env.LUNA_CLAUDE_EFFORT] : []), '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system]);
+      '--tools', '', ...(process.env.PLATO_CLAUDE_EFFORT ? ['--effort', process.env.PLATO_CLAUDE_EFFORT] : []), '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system]);
     let buffer = '', result = null, err = '';
     const timer = setTimeout(() => { child.kill('SIGTERM'); reject(new Error('Claude took too long.')); }, timeoutMs);
     child.stdout.on('data', chunk => {
@@ -66,7 +66,7 @@ function claudeStream(system, input, { model, onDelta, timeoutMs }) {
 
 /** One turn: { say, think, lost, tools }, on the student's provider (backend/agents.mjs). onText(delta) gets the message as it is
  *  written, onThink(delta) the plan note. Throws when the model can't answer. */
-export function claudeActor({ context = [], dialogue = [], brief = '', face = null }, { model = process.env.LUNA_CLAUDE_MODEL || 'opus', onText = () => {}, onThink = () => {}, timeoutMs = 300_000 } = {}) {
+export function claudeActor({ context = [], dialogue = [], brief = '', face = null }, { model = process.env.PLATO_CLAUDE_MODEL || 'opus', onText = () => {}, onThink = () => {}, timeoutMs = 300_000 } = {}) {
   // The reply's form last, where it is read last (14 Oct: after a long conversation it sometimes wrote none of its marks).
   const input = `CONTEXT UPDATES you have received (oldest first; they are information, not turns):\n\n${context.join('\n\n---\n\n')}\n\nTHE CONVERSATION (oldest first):\n${dialogue.join('\n')}\n\n${faceLine(face) ? `${faceLine(face)}\n` : ''}Your turn. Reply in your three parts: ${THINK}, ${SAY}, ${MARK}.`;
   const system = `${actorPrompt(brief)}${HARNESS}`;

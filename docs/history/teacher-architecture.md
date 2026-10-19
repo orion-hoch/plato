@@ -1,4 +1,4 @@
-# Luna Study — Teacher Architecture Design
+# Plato — Teacher Architecture Design
 
 2026-10-04
 
@@ -6,7 +6,7 @@
 
 ## 1. Purpose and principles
 
-Luna should teach like a strong human tutor. It knows the whole course and knows this student, so it can move a learner from a rough grasp of an idea to using it flexibly under exam conditions. It should never leave a topic untaught and never recite half-remembered material.
+Plato should teach like a strong human tutor. It knows the whole course and knows this student, so it can move a learner from a rough grasp of an idea to using it flexibly under exam conditions. It should never leave a topic untaught and never recite half-remembered material.
 
 **The core problem.** Take messy student input (notes, slides, problem sets, past exams, voice) and turn it into an understanding that is:
 
@@ -48,7 +48,7 @@ The prototype runs and 904 of 905 unit tests pass. Its engineering effort went i
 | Mosaic | Bound to voice volume and file-drop count only (`src/VoiceCanvas.jsx`) | A beautiful surface with no meaning behind it |
 | Plumbing | 4 providers, 22 environment variables, 6 call sites to the TypeSafe classifier, `server/live-voice.mjs` is one 1,263-line function with about 60 shared variables | Hard to change safely |
 
-**Worth keeping:** the tool-calling loop in `server/openai-luna.mjs`, the whiteboard block schema in `shared/board-parts.mjs`, the speech-to-text and text-to-speech adapters, the streaming-to-speech pipeline, the atomic-write discipline, and the habit of measuring (the `benchmarks/` folder).
+**Worth keeping:** the tool-calling loop in `server/openai-plato.mjs`, the whiteboard block schema in `shared/board-parts.mjs`, the speech-to-text and text-to-speech adapters, the streaming-to-speech pipeline, the atomic-write discipline, and the habit of measuring (the `benchmarks/` folder).
 
 ## 3. System architecture
 
@@ -591,16 +591,16 @@ Every background agent can fail without stopping the session:
 
 Four model settings replace the current 22 environment variables' model and transport switches:
 
-- `LUNA_MODEL_LARGE`
-- `LUNA_MODEL_SMALL`
-- `LUNA_MODEL_EMBED`
-- `LUNA_VOICE`: ElevenLabs or provider realtime
+- `PLATO_MODEL_LARGE`
+- `PLATO_MODEL_SMALL`
+- `PLATO_MODEL_EMBED`
+- `PLATO_VOICE`: ElevenLabs or provider realtime
 
 The provider key goes in its own variable.
 
 ## 10. Interface and mosaic
 
-The mosaic becomes the concept map, and voice becomes one way among several to talk to the same teacher. The student can always see what Luna knows about the course, what it thinks about them, and what is next.
+The mosaic becomes the concept map, and voice becomes one way among several to talk to the same teacher. The student can always see what Plato knows about the course, what it thinks about them, and what is next.
 
 ### 10.1 Views
 
@@ -779,7 +779,7 @@ server/
 
 | Today | Action | Into |
 | --- | --- | --- |
-| `openai-luna.mjs` tool loop, streaming, usage reporting | Keep, slim down | `teacher.mjs` |
+| `openai-plato.mjs` tool loop, streaming, usage reporting | Keep, slim down | `teacher.mjs` |
 | `shared/board-parts.mjs`, `whiteboard.mjs`, `tutor-output.mjs` | Keep; turn the 5.5 KB prose rules into a tool schema | `teacher.mjs` |
 | `speech-stream.mjs`, the ElevenLabs parts of `live-voice.mjs`, caption timing | Keep | `voice.mjs` |
 | `usage-ledger.mjs`, `usage-pricing.mjs`, `diagnostics.mjs` | Keep; move storage to SQLite | `store.mjs` |
@@ -788,7 +788,7 @@ server/
 | `material-retrieval.mjs` | Replace with embedding search | `store.mjs`, the `open_source` tool |
 | `question-bank.mjs`, `question-identity.mjs` | Replace | `smith.mjs` |
 | `mastery.mjs`, `grade-citations.mjs`, `practice-trail.mjs`, `hint-policy.mjs` | Replace | `learner.mjs`, `scheduler.mjs`; hints become an ordinary teacher request |
-| `tutor-context.mjs`, `luna-fast.mjs`, `tutor-turn-task.mjs` | Replace | `compiler.mjs`, `teacher.mjs` |
+| `tutor-context.mjs`, `plato-fast.mjs`, `tutor-turn-task.mjs` | Replace | `compiler.mjs`, `teacher.mjs` |
 | `session-history.mjs`, `onboarding.mjs`, `tutor-session-timing.mjs` | Replace | `session.mjs`, `learner.mjs` |
 | `live-voice.mjs` (1,263 lines) | Split, then delete | `session.mjs`, `voice.mjs` |
 | `jev.mjs`, `jev-intent.mjs`, `jev-tutor-intent.mjs`, `jev-course.mjs`, `board-routing-context.mjs` | Delete; the teacher's structured output covers intent and board decisions; course artwork classification uses the small model | none |

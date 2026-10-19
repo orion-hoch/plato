@@ -1,7 +1,7 @@
 import { EXTRACT_READING, PAGE_TRANSCRIPT, INTERPRETATION, GRAPH_CANDIDATE, MERGE_DECISIONS, GRAPH_OUTLINE } from '../../knowledge/schemas.mjs';
 import { EXTRACT, TRANSCRIBE, SEGMENT, MERGE, REFINE, PARTITION, MERGE_PARTITIONS, FINALIZE, PROMPT_VERSIONS } from '../prompts/knowledge.mjs';
 
-// Live knowledge providers over the Codex app-server gateway. Luna reads images; Astra interprets and builds the graph.
+// Live knowledge providers over the Codex app-server gateway. Plato reads images; Astra interprets and builds the graph.
 // Inputs are compacted to what the prompt needs; outputs are schema-checked by the gateway.
 
 const evidence = items => items.map(({ anchor, excerpt }) => ({ anchorId: anchor.id, anchorKey: anchor.anchorKey, page: anchor.location.page, slide: anchor.location.slide, section: anchor.location.sectionPath.join(' > '), text: excerpt }));
@@ -21,13 +21,13 @@ const contentBrief = c => ({
 export function createKnowledgeCodex({ gateway, timeoutMs = 600_000 }) {
   const extractor = {
     extract: request => gateway.structured({
-      role: 'luna', instructions: EXTRACT, promptTemplateVersion: PROMPT_VERSIONS.extract, schema: EXTRACT_READING, timeoutMs, effort: 'medium',
+      role: 'plato', instructions: EXTRACT, promptTemplateVersion: PROMPT_VERSIONS.extract, schema: EXTRACT_READING, timeoutMs, effort: 'medium',
       input: { filename: request.filename, regions: request.regionsToRead.map(r => ({ anchorKey: r.anchorKey, kind: r.kind, location: { page: r.location.page, slide: r.location.slide }, reason: r.reason, imageIndex: request.images.findIndex(i => i.anchorKey === r.anchorKey) })) },
       images: request.images.map(i => i.dataUrl),
     }),
     // v8: one PDF page from its image as markdown (knowledge/pages.mjs): the same reader and effort as extract.
     transcribe: request => gateway.structured({
-      role: 'luna', instructions: TRANSCRIBE, promptTemplateVersion: PROMPT_VERSIONS.transcribe, schema: PAGE_TRANSCRIPT, timeoutMs, effort: 'medium',
+      role: 'plato', instructions: TRANSCRIBE, promptTemplateVersion: PROMPT_VERSIONS.transcribe, schema: PAGE_TRANSCRIPT, timeoutMs, effort: 'medium',
       input: { filename: request.filename, page: request.page, pageCount: request.pageCount, textLayer: request.textLayer }, images: [request.image],
     }),
   };

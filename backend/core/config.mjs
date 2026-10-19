@@ -18,7 +18,7 @@ export function defaultConfig(overrides = {}) {
     // Of those, builds that run for many minutes take at most `max`, so short session work always has a worker.
     longJobs: { types: ['study_course', 'study_topic', 'build_graph', 'refine_knowledge', 'interpret_source', 'extract_source', 'build_modules'], max: 12 },
     // Sandbox only: publish a course whose validation reports have warnings only, as provisional (backend/knowledge/build.mjs).
-    publishWarningOnlyReviews: globalThis.process?.env?.LUNA_PUBLISH_WARNING_REVIEWS === 'provisional',
+    publishWarningOnlyReviews: globalThis.process?.env?.PLATO_PUBLISH_WARNING_REVIEWS === 'provisional',
     personalCoalesceMs: 2000,
     personalCoalesceMax: 20,
     reservationLeaseMs: 60_000,

@@ -1,7 +1,9 @@
-// Reading Plato's replies aloud in the text chat (13 Oct: "I like the pure text style but… some voice component… helps"): this
-// Mac's own voice (/dev/tts: Kokoro through mlx-audio, else macOS say), a paragraph at a time as his reply streams in, in
+// Reading Plato's replies aloud in the text chat (13 Oct: "I like the pure text style but… some voice component… helps"): an
+// ElevenLabs voice on the student's own API key (server /voice/tts), a paragraph at a time as his reply streams in, in
 // order; the audio is fetched ahead and played in turn. Off unless turned on (remembered on this computer). Only his words
 // are read: never code, tables, his plan note or the slides.
+import { authHeader } from './backend-client.js';
+
 const KEY = 'plato-read-aloud';
 let on = (() => { try { return localStorage.getItem(KEY) === 'on'; } catch { return false; } })();
 const listeners = new Set();
@@ -22,7 +24,7 @@ export const speaker = {
     const line = forSpeech(text);
     if (!on || !line) return;
     const mine = run;
-    const audio = fetch('/dev/tts', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ text: line }) })
+    const audio = authHeader().then(auth => fetch('/voice/tts', { method: 'POST', headers: { 'Content-Type': 'application/json', ...auth }, body: JSON.stringify({ text: line }) }))
       .then(r => (r.ok ? r.blob() : null)).catch(() => null);
     queue = queue.then(async () => {
       const blob = await audio;

@@ -12,7 +12,7 @@ import { cliEnvironment } from '../server/codex.mjs';
 
 export const PROVIDER = process.env.PLATO_PROVIDER === 'codex' ? 'codex' : 'claude';
 
-// The callers name Claude's tiers; on ChatGPT each is the nearest model (LUNA_DEEP / LUNA_LIGHT, server/runtime.mjs).
+// The callers name Claude's tiers; on ChatGPT each is the nearest model (PLATO_DEEP / PLATO_LIGHT, server/runtime.mjs).
 const codexModel = name => { const { deep, light } = modelSettings(); return name === 'haiku' ? light.model : name === 'opus' || name === 'sonnet' ? deep.model : name; };
 
 // Agents with files run in the OS sandbox, fenced to their folder: they write only there, read nothing else of the student's
@@ -52,7 +52,7 @@ function lines(stream, each) {
  * dirs: other folders it reads (a skill). onStep({ name: 'Read'|'Write'|'Edit'|'Bash'|…, input: { file_path, command } }) for
  * each tool call, as it happens. Resolves with its last message; rejects when it fails or runs past `timeoutMs`.
  */
-export function agent(cwd, brief, task = 'Begin.', { model = process.env.LUNA_CLAUDE_MODEL || 'opus', effort = 'high', timeoutMs = 40 * 60_000, dirs = [], onStep = () => {} } = {}) {
+export function agent(cwd, brief, task = 'Begin.', { model = process.env.PLATO_CLAUDE_MODEL || 'opus', effort = 'high', timeoutMs = 40 * 60_000, dirs = [], onStep = () => {} } = {}) {
   return new Promise((resolve, reject) => {
     const child = PROVIDER === 'codex'
       ? spawn(process.env.CODEX_BIN?.trim() || 'codex', ['exec', '--json', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '--cd', cwd,

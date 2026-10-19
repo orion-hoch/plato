@@ -40,7 +40,7 @@ const GUIDE_BODY = shape.object({ action: shape.enum(['show', 'move_on', 'practi
 const WATCHDOG_MS = 5_000; // a writer card not in by then gives way to a reading from the notes (else the safe move); the writer's card still takes its place
 const HELD_MS = 8_000; // a page prediction on the card in play waits this long for the line that says it aloud (its response id)
 // The quick path (spec §16, §13 binding rule 2): the move goes out within it; a verdict slower than that is attached when it lands.
-const QUICK_MS = 3500, CLASSIFY_MS = Number(process.env.LUNA_CLASSIFY_MS) || 4000; // LUNA_CLASSIFY_MS: smokes force the late-reading path (1)
+const QUICK_MS = 3500, CLASSIFY_MS = Number(process.env.PLATO_CLASSIFY_MS) || 4000; // PLATO_CLASSIFY_MS: smokes force the late-reading path (1)
 const PREFER_AHEAD = 4; // sections of the walk the course model builds ahead of the student (doubled: built ones drop out)
 const NOTES_RIGHT = 2, NOTES_MAX = 8; // a section taught from the notes (no course model for it yet) is done after this many right answers, or content lines, on it
 const ARC_MAX = 14, ARC_MAX_OPEN = 24, ARC_CRUNCH = 8; // within a week of the exam: 8, 14 with a misconception open // cards on one target before the engine moves on (it stays a gap, chosen again by need); longer while a wrong model is open
@@ -107,8 +107,8 @@ export function installDirector(app) {
   const firstSentence = text => sentencesOf(text)[0] || String(text || '');
 
   // ---------- what the engine reads: the course model (interface A), the learner (interface B) ----------
-  // LUNA_COURSE_MODEL=off (evals' level-3 ablation, dev only): the engine sees no course model and teaches from the notes.
-  const ABLATED = globalThis.process?.env?.LUNA_COURSE_MODEL === 'off';
+  // PLATO_COURSE_MODEL=off (evals' level-3 ablation, dev only): the engine sees no course model and teaches from the notes.
+  const ABLATED = globalThis.process?.env?.PLATO_COURSE_MODEL === 'off';
   const cmOf = scope => ABLATED ? null : safe(() => U().courseModel?.(scope) ?? null, null);
   const sliceOf = (scope, kcId) => kcId && !ABLATED ? normalized(safe(() => U().forKc(scope, kcId), null)) : null;
   // Older slices name an item's family `facet` and a wrong model's kind of error by its v11 kind: one shape for the policy.
@@ -1218,9 +1218,9 @@ export function installDirector(app) {
     return { say: `On the page: ${b?.label || 'the next problem'}. Ask it as: "${pick.spoken}" (just that). The full problem, for you to refer to (never read it all aloud): ${full}. Their answer is checked for you: wait for [Checked].`, boardId: pick.boardId, board: b };
   }
   // A colleague's check of a board he wrote (backend/session/review.mjs), in the background; an error reaches him as a quiet note
-  // (context, never a turn). LUNA_REVIEW=0 turns it off; tests (node --test) never spawn it.
+  // (context, never a turn). PLATO_REVIEW=0 turns it off; tests (node --test) never spawn it.
   function reviewLater(s, g, title, text) {
-    if (process.env.LUNA_REVIEW === '0' || process.env.NODE_TEST_CONTEXT) return;
+    if (process.env.PLATO_REVIEW === '0' || process.env.NODE_TEST_CONTEXT) return;
     void reviewBoard({ title, text, course: g?.study?.text || '' }).then(errors => { if (errors) safe(() => S().emit(s.id, 'tutor.note', { text: reviewNote(title, errors) })); });
   }
   /** POST /sessions/{id}/guide: the tutor's own moves in guide mode (show a board, move on, practise). Gives { say, boardId?, card? }. */

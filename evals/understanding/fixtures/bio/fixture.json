@@ -27,7 +27,7 @@
   },
   "domainType": "science-model",
   "sandboxEnv": {
-    "LUNA_PUBLISH_WARNING_REVIEWS": "provisional"
+    "PLATO_PUBLISH_WARNING_REVIEWS": "provisional"
   },
   "sandboxEnvWhy": "Sandbox-only (approved by the user; the live app stays strict): a course whose validation reports have only warnings publishes as provisional, with the warnings kept on the manifest's unresolvedIssues."
 }

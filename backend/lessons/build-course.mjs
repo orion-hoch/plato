@@ -336,9 +336,9 @@ export async function buildCourse(dir, { about = '', onStage = () => {}, atOnce 
 
 /**
  * The guide's riskiest topics (by their audits) each taught once to a simulated student and judged; the findings go back into
- * the guide and the brief (SMOKE_FIX). LUNA_SMOKE=0 skips the lessons. → the readiness report's checks.
+ * the guide and the brief (SMOKE_FIX). PLATO_SMOKE=0 skips the lessons. → the readiness report's checks.
  */
-async function checkLessons(dir, plan, onStage, { lessons = Number(process.env.LUNA_SMOKE ?? 2) } = {}) {
+async function checkLessons(dir, plan, onStage, { lessons = Number(process.env.PLATO_SMOKE ?? 2) } = {}) {
   const audits = plan.units.map(u => ({ unit: u, a: readJson(path.join(dir, 'audit', u.file.replace(/\.md$/, '.json'))) })).filter(x => x.a);
   const auditFixes = audits.reduce((n, x) => n + (x.a.fixes?.length || 0), 0), unverified = audits.flatMap(x => x.a.unverified || []).slice(0, 12);
   const topics = loadStudy(dir) || [], at = title => topics.findIndex(t => t.title.trim().toLowerCase() === String(title || '').trim().toLowerCase());

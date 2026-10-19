@@ -10,7 +10,7 @@ A voice study tutor for any course. Drop in your notes, slides, problem sets or 
 4. Run `node scripts/setup-tutor-agent.mjs`. It creates the private ElevenLabs agent that plays Plato's voice, or updates it if it exists, and writes `ELEVENLABS_AGENT_ID` into `.env`.
 5. Run `npm install`, then `npm run dev`, and open http://127.0.0.1:5188.
 
-For everyday use, run `npm run build` once and then `npm start`. That serves the built page with long-lived asset caching, security headers and a `GET /healthz` check. The server listens only on 127.0.0.1. `PORT` and `LUNA_DATA_DIR` change its port and where it keeps its data. `.env.example` lists every setting.
+For everyday use, run `npm run build` once and then `npm start`. That serves the built page with long-lived asset caching, security headers and a `GET /healthz` check. The server listens only on 127.0.0.1. `PORT` and `PLATO_DATA_DIR` change its port and where it keeps its data. `.env.example` lists every setting.
 
 ## Using Plato
 
@@ -60,12 +60,12 @@ There are four settings in `.env`, each a model and an effort. All but the voice
 
 | Setting | Default | Used for |
 | --- | --- | --- |
-| `LUNA_LIGHT` | `gpt-6-luna`, low | Answer classification and checking the correct answer; page transcription and region extraction (medium) |
-| `LUNA_DEEP` | `gpt-6-astra`, high | Work prepared ahead: the course build, validators, the learner model, questions, modules, new files, the course model. Exam problems run at high in their own lane. Drawing reads and visuals run at low. |
-| `LUNA_DIRECTOR` | the deep model, low | Cards for answers no branch covers, and `think` |
-| `LUNA_VOICE` | `gpt-6.1-sol`, low (its fastest) | The realtime actor, hosted by ElevenLabs |
+| `PLATO_LIGHT` | `gpt-6-luna`, low | Answer classification and checking the correct answer; page transcription and region extraction (medium) |
+| `PLATO_DEEP` | `gpt-6-astra`, high | Work prepared ahead: the course build, validators, the learner model, questions, modules, new files, the course model. Exam problems run at high in their own lane. Drawing reads and visuals run at low. |
+| `PLATO_DIRECTOR` | the deep model, low | Cards for answers no branch covers, and `think` |
+| `PLATO_VOICE` | `gpt-6.1-sol`, low (its fastest) | The realtime actor, hosted by ElevenLabs |
 
-Work the student is waiting on runs on Codex's Fast tier (`priority`: 1.5–2× speed, more usage; `LUNA_REPLY_TIER=default` turns it off) and never queues behind background work. It has its own lanes:
+Work the student is waiting on runs on Codex's Fast tier (`priority`: 1.5–2× speed, more usage; `PLATO_REPLY_TIER=default` turns it off) and never queues behind background work. It has its own lanes:
 - `director`: 4 at a time;
 - `reply` (drawing reads): 4;
 - `replyLight`: 4;

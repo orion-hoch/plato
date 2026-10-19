@@ -21,7 +21,7 @@ const fixture = opt('--fixture', 'bio'), nFiles = Number(opt('--files', '2')), t
 const runId = opt('--run') || `${new Date().toISOString().replace(/[:.]/g, '-').slice(0, 19)}-e2e-${fixture}`, OUT = path.join(HERE, 'runs', runId, 'e2e');
 const log = (...x) => console.log(`[${new Date().toISOString().slice(11, 19)}]`, ...x);
 await loadFixture(fixture);
-Object.assign(process.env, FX.sandboxEnv ?? {}, { LUNA_PUBLISH_WARNING_REVIEWS: 'provisional' }); // sandbox-only (the user's decision)
+Object.assign(process.env, FX.sandboxEnv ?? {}, { PLATO_PUBLISH_WARNING_REVIEWS: 'provisional' }); // sandbox-only (the user's decision)
 const steps = [], record = { fixture, runId, startedAt: new Date().toISOString(), steps };
 const save = () => writeJson(path.join(OUT, `${fixture}.json`), { ...record, ok: steps.length > 0 && steps.every(s => s.ok || s.unmeasured) });
 async function step(id, fn) {
@@ -116,18 +116,18 @@ try {
       if (r.status && !['active', 'listening', 'planning'].includes(r.status) && !r.session) throw Error(`resumed as ${JSON.stringify(r).slice(0, 200)}`);
       return { sessionId: started.sessionId, resumed: Object.keys(r).slice(0, 8) };
     });
-    // The next day: the same data, the backend's clock a day later (LUNA_CLOCK_OFFSET_MS, dev-only); a session starts on what is due.
+    // The next day: the same data, the backend's clock a day later (PLATO_CLOCK_OFFSET_MS, dev-only); a session starts on what is due.
     await step('resume_next_day', async () => {
       await stopSandbox((sbb ?? sb).server);
-      sbb = await startSandbox({ port, reuse: sb.dir, env: { LUNA_CLOCK_OFFSET_MS: '86400000' } });
+      sbb = await startSandbox({ port, reuse: sb.dir, env: { PLATO_CLOCK_OFFSET_MS: '86400000' } });
       const next = await apiAt(sbb.base)('POST', `/v1/exams/${exam.examId}/sessions`, { clientSessionRequestId: `e2e-nextday-${Date.now()}` });
       const goal = next.agenda?.goals?.find(g => g.id === next.agenda.currentGoalId);
       if (!next.sessionId || !goal) throw Error(`the next day's session has no goal: ${JSON.stringify(next.agenda ?? next).slice(0, 200)}`);
       return { sessionId: next.sessionId, goal: goal.title, why: goal.why ?? null, card: next.card?.ask ?? next.card?.say ?? null };
     });
-    // A failed model call never leaves silence or a broken card (LUNA_FAULTS, dev-only): the director lane fails every call.
+    // A failed model call never leaves silence or a broken card (PLATO_FAULTS, dev-only): the director lane fails every call.
     await step('model_failure', async () => {
-      const s = await session('faults', sbb ?? sb, exam.examId, { persona: 'P4', env: { LUNA_FAULTS: 'director:fail:1' }, turnsHere: 4 });
+      const s = await session('faults', sbb ?? sb, exam.examId, { persona: 'P4', env: { PLATO_FAULTS: 'director:fail:1' }, turnsHere: 4 });
       const students = s.run.events.filter(e => e.kind === 'student'), silent = students.filter((e, i) => !s.run.events.some(p => p.kind === 'plato' && p.at > e.at && p.at < (students[i + 1]?.at ?? Infinity)));
       if (silent.length) throw Error(`${silent.length} of ${students.length} student turns got no reply with the director lane failing`);
       return { turns: students.length, replies: s.replies, cards: s.run.events.filter(e => e.kind === 'server' && e.type === 'card.issued').length };

@@ -37,7 +37,7 @@ What that means for shapes:
 - It can answer questions about a drawing: "is there a diagram?", "which kind is it?", "is the sp arrow pointing at the bottom cell?".
 - It cannot say what is drawn where. There is no item list, no labels, no from/to, no coordinates and no free text. The guide says so directly: "Use Structured Outputs with the Responses API when you need to generate an object that follows your own JSON schema, such as extracted fields…".
 - **Access:** it needs `Authorization: Bearer $OPENAI_API_KEY`. Plato has no such key:
-  - `.env` and `.env.example` define no OpenAI variable. I checked variable names only; they are `LUNA_*`, `PORT` and `ELEVENLABS_*`.
+  - `.env` and `.env.example` define no OpenAI variable. I checked variable names only; they are `PLATO_*`, `PORT` and `ELEVENLABS_*`.
   - `server/codex.mjs` never forwards API keys to the CLI.
   - The Codex app-server protocol (codex-cli 0.157.0, from its generated bindings) has no Decisions method.
   
@@ -259,9 +259,9 @@ It would earn its place if Plato needs to know within a second that a diagram is
 
 ## Costs and latency
 
-Plato's models run on your ChatGPT sign-in, so reads count against plan limits rather than a per-token bill. API prices ([Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) $10 in / $50 out per 1M tokens; [Luna](https://developers.openai.com/api/docs/models/gpt-6-luna) $0.10 / $0.50) are a yardstick:
+Plato's models run on your ChatGPT sign-in, so reads count against plan limits rather than a per-token bill. API prices ([Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) $10 in / $50 out per 1M tokens; [Plato](https://developers.openai.com/api/docs/models/gpt-6-luna) $0.10 / $0.50) are a yardstick:
 
-| Per read | Tokens in / out | At Astra prices | At Luna prices |
+| Per read | Tokens in / out | At Astra prices | At Plato prices |
 |---|---|---|---|
 | FSM (measured) | 6,648 / 530 | $0.093 | $0.0009 |
 | Stack frame (measured) | 5,518 / 364 | $0.073 | $0.0007 |
@@ -335,7 +335,7 @@ The design above, built on 2026-10-07. There are no new tests, by your instructi
 - **Renderer gaps.** `graph` takes at most 16 nodes and has no start arrow. `memory` is one column. Grids need their headers read.
 ## Sources
 
-- OpenAI: [Decisions guide](https://developers.openai.com/api/docs/guides/decisions) · [Decisions public beta](https://community.openai.com/t/decisions-api-is-now-available-in-public-beta/1403877) · [Changelog](https://developers.openai.com/api/docs/changelog) · [Images and vision](https://developers.openai.com/api/docs/guides/images-vision) · [Image cost calculator](https://developers.openai.com/api/docs/guides/image-cost-calculator) · [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) · [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) · [GPT-6 Luna](https://developers.openai.com/api/docs/models/gpt-6-luna)
+- OpenAI: [Decisions guide](https://developers.openai.com/api/docs/guides/decisions) · [Decisions public beta](https://community.openai.com/t/decisions-api-is-now-available-in-public-beta/1403877) · [Changelog](https://developers.openai.com/api/docs/changelog) · [Images and vision](https://developers.openai.com/api/docs/guides/images-vision) · [Image cost calculator](https://developers.openai.com/api/docs/guides/image-cost-calculator) · [Structured Outputs](https://developers.openai.com/api/docs/guides/structured-outputs) · [GPT-6 Astra](https://developers.openai.com/api/docs/models/gpt-6-astra) · [GPT-6 Plato](https://developers.openai.com/api/docs/models/gpt-6-luna)
 - Products: [tldraw Make Real](https://tldraw.substack.com/p/make-real-the-story-so-far) · [make-real-starter](https://github.com/tldraw/make-real-starter) · [tldraw agent starter kit](https://tldraw.dev/starter-kits/agent) · [Excalidraw wireframe to code (model update)](https://github.com/excalidraw/excalidraw/pull/8148) · [Excalidraw draw to shape](https://github.com/excalidraw/excalidraw/pull/9313) · [Microsoft Ink Recognizer (retired)](https://learn.microsoft.com/en-us/previous-versions/azure/cognitive-services/Ink-Recognizer/overview) · [ML Kit Digital Ink](https://developers.google.com/ml-kit/vision/digital-ink-recognition) · [ML Kit base models](https://developers.google.com/ml-kit/vision/digital-ink-recognition/base-models) · [ML Kit on Android](https://developers.google.com/ml-kit/vision/digital-ink-recognition/android)
 - Research: [$-family recognizers](https://depts.washington.edu/acelab/proj/dollar/index.html) · [Ramer–Douglas–Peucker](https://en.wikipedia.org/wiki/Ramer%E2%80%93Douglas%E2%80%93Peucker_algorithm) · [PaleoSketch (IUI 2008)](https://doi.org/10.1145/1378773.1378775) · [Bresler et al. 2016](https://link.springer.com/article/10.1007/s10032-016-0269-z) · [VLMs are blind](https://arxiv.org/abs/2407.06581) · [Fadeeva et al. 2024](https://arxiv.org/abs/2402.15307) · [Arrow-guided VLM 2025](https://arxiv.org/abs/2505.07864) · [Set-of-Mark 2023](https://arxiv.org/abs/2310.11441)
 - Local: Codex app-server protocol bindings (`codex app-server generate-ts`, codex-cli 0.157.0): `UserInput` images accept `detail`, and there is no Decisions method.

@@ -10,7 +10,7 @@ This file is the complete implementation brief. A coding agent must be able to i
 
 A student creates a test/exam workspace, uploads many heterogeneous files, and studies by speaking with a tutor. The system preserves and understands the source material, organizes it into fine-grained topics, adapts explanations and connections to the student, and records the student's changing understanding of each subtopic. The source knowledge and learner state are distinct, persistent systems with active feedback loops.
 
-The strong reasoning role is called **Astra** in this specification. Astra diagnoses uncertainty, decides what teaching purpose is useful, selects or requests questions, reasons over evidence, and decides whether explanations or the personal study map should change. A fast **speaking role** handles conversational delivery. A cheap reliable extraction role is called **Luna**. These names describe responsibilities; they are not selected production model IDs. One provider/model may implement several roles, and a role may combine deterministic code with model calls.
+The strong reasoning role is called **Astra** in this specification. Astra diagnoses uncertainty, decides what teaching purpose is useful, selects or requests questions, reasons over evidence, and decides whether explanations or the personal study map should change. A fast **speaking role** handles conversational delivery. A cheap reliable extraction role is called **Plato**. These names describe responsibilities; they are not selected production model IDs. One provider/model may implement several roles, and a role may combine deterministic code with model calls.
 
 ### 1.1 Accepted product requirements
 

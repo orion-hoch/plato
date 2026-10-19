@@ -1,6 +1,6 @@
 # Personalization: what works, and how Plato should infer "how this student learns best"
 
-Research brief for Plato (Luna-Study), 2026-10-08.
+Research brief for Plato (Plato), 2026-10-08.
 
 **Scope:**
 - which differences between learners are worth adapting to;
@@ -795,7 +795,7 @@ A prompt-only simulated student would therefore let Plato "fix" misconceptions w
 - An LLM only turns that content into natural speech, adding hedges that match the code's confidence.
 - A cheap check verifies that the paraphrase kept the content.
 
-This runs in the sandbox, on a `LUNA_DATA_DIR` copy on port 5199, with the text stand-in and **no ElevenLabs sessions**.
+This runs in the sandbox, on a `PLATO_DATA_DIR` copy on port 5199, with the text stand-in and **no ElevenLabs sessions**.
 
 ### 6.2 The simulator's generative model (ground truth)
 
@@ -894,7 +894,7 @@ If full never beats θ-only, the extra profile machinery isn't earning its compl
 ### 6.5 Protocol and practical notes
 
 - **Start small.** First run the **swap test**: 4–6 trait pairs × 3–5 seeds × 2 sessions each. Then the persona assertions. Run the outcome ablations last; they are the most expensive.
-- **Run only in the sandbox.** A `LUNA_DATA_DIR` copy on port 5199, with the text stand-in replacing ElevenLabs. Fix the seeds. Report means with bootstrap confidence intervals. Store the logs of move cards and profile snapshots, so the "why" lines and assertions can be checked offline without re-running.
+- **Run only in the sandbox.** A `PLATO_DATA_DIR` copy on port 5199, with the text stand-in replacing ElevenLabs. Fix the seeds. Report means with bootstrap confidence intervals. Store the logs of move cards and profile snapshots, so the "why" lines and assertions can be checked offline without re-running.
 - **Validate the simulator once**, against a handful of real transcripts (the user's own sessions):
   - compare answer length, hedge rate, and correctness against predicted P;
   - run a selective-flip check: misconceptions should persist under untargeted feedback and yield to targeted refutation.

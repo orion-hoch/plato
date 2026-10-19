@@ -1,5 +1,5 @@
 // node scripts/setup-tutor-agent.mjs   (a deploy: the lead runs it; tests and evals never do)
-// Creates or updates the private ElevenLabs agent that is Luna's realtime speaking role: "Luna Tutor", the actor that
+// Creates or updates the private ElevenLabs agent that is Plato's realtime speaking role: "Plato Tutor", the actor that
 // performs the engine's cards (card v2) with ACTOR_PROMPT v2's stage directions and its client tools (point_to by
 // anchor, read_aloud, …; backend/session/agent.mjs). Only this project's server, holding ELEVENLABS_API_KEY, can start
 // a conversation with it (it issues short-lived tokens from POST /api/session). Writes ELEVENLABS_AGENT_ID into .env.
@@ -17,7 +17,7 @@ function described(schema, name = 'value') {
   return out;
 }
 // The agent, and the .env key its id is kept under.
-const agent = { name: 'Luna Tutor', env: 'ELEVENLABS_AGENT_ID', prompt: ACTOR_PROMPT, tools: ACTOR_TOOLS.map(tool => ({ ...tool, parameters: described(tool.parameters) })) };
+const agent = { name: 'Plato Tutor', env: 'ELEVENLABS_AGENT_ID', prompt: ACTOR_PROMPT, tools: ACTOR_TOOLS.map(tool => ({ ...tool, parameters: described(tool.parameters) })) };
 // Staying silent is a move: ElevenLabs' built-in skip_turn system tool, in exactly the documented shape
 // (elevenlabs.io/docs/agents-platform/customization/tools/system-tools/skip-turn). Its wait timeout defaults to -1:
 // no check-in afterwards, silent until the student speaks again.
@@ -31,7 +31,7 @@ const BUILT_IN_TOOLS = {
 process.loadEnvFile('.env');
 const key = process.env.ELEVENLABS_API_KEY;
 if (!key) throw Error('Set ELEVENLABS_API_KEY in .env.');
-const { model: llm, effort } = modelSettings().voice; // LUNA_VOICE and LUNA_VOICE_EFFORT (older: LUNA_AGENT_LLM, LUNA_AGENT_EFFORT)
+const { model: llm, effort } = modelSettings().voice; // PLATO_VOICE and PLATO_VOICE_EFFORT (older: PLATO_AGENT_LLM, PLATO_AGENT_EFFORT)
 
 const configOf = ({ name, prompt, tools }) => ({
   name,
@@ -45,7 +45,7 @@ const configOf = ({ name, prompt, tools }) => ({
     tts: { voice_id: process.env.ELEVENLABS_VOICE_ID || 'JBFqnCBsd6RMkjVDRZzb', model_id: 'eleven_v4_turbo' },
     conversation: { max_duration_seconds: 1800 },
     // Silence is studying (thinking, writing, reading): never prompt the student to respond.
-    turn: { turn_timeout: Number(process.env.LUNA_AGENT_TURN_TIMEOUT || -1), soft_timeout_config: { timeout_seconds: -1 } },
+    turn: { turn_timeout: Number(process.env.PLATO_AGENT_TURN_TIMEOUT || -1), soft_timeout_config: { timeout_seconds: -1 } },
   },
   platform_settings: {
     auth: { enable_auth: true },

@@ -46,7 +46,7 @@ export function addToLibrary(dir, entry) {
  * file): { title, note } with the builder's note for the tutor. onStage(text, fraction) at each real step of its work (see
  * stepOf). What it has built when the budget runs out still goes up; no page at all throws.
  */
-export function buildFigure({ idea, object = '' }, { out, onStage = () => {}, model = process.env.LUNA_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
+export function buildFigure({ idea, object = '' }, { out, onStage = () => {}, model = process.env.PLATO_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
   if (!existsSync(path.join(SKILL, 'SKILL.md'))) return Promise.reject(new Error(`the anatomy skill is missing: git clone https://github.com/wheresryan22/anatomy ${SKILL}`));
   const cwd = mkdtempSync(path.join(tmpdir(), 'plato-anatomy-')), page = path.join(cwd, 'figure.html'); // no project files, settings or memory of anyone's
   const step = stepper(page, onStage);

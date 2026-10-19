@@ -647,7 +647,7 @@ function restored(sim, lib, spec, saved) {
 const DELAY_DAYS = 3;
 async function level3(app, { grams, index }) {
   const sim = await import('./sim/core.mjs'), { runFixed } = await import('./sim/fixed.mjs'), lib = await import(path.join(FX.dir, 'beliefs.mjs'));
-  // --engine notes: the same engine with no course model (LUNA_COURSE_MODEL=off on the sandbox server, dev-only): the lead's
+  // --engine notes: the same engine with no course model (PLATO_COURSE_MODEL=off on the sandbox server, dev-only): the lead's
   // level-3 ablation, course model against notes only, at the same model and latency budget.
   const engine = opt('--engine', 'course-model');
   const seeds = (opt('--seeds', '1')).split(',').map(Number), condition = opt('--condition', 'full'), turns = Math.min(12, Number(opt('--turns')) || 8), parallel = Math.max(1, Number(opt('--parallel')) || 2);
@@ -701,7 +701,7 @@ async function level3(app, { grams, index }) {
       const code = await new Promise(resolve => {
         const logFd = openSync(path.join(dir, 'stand-in.log'), 'w');
         const child = spawn(process.execPath, ['--no-warnings', 'evals/stand-in.mjs', scenario, '--turns', String(turns), '--no-judge', '--student', path.join(HERE, 'sim', 'student.mjs'), '--data', sandboxDir(), '--port', String(myPort), '--keep', ...(topicId ? ['--topic', topicId] : [])],
-          { cwd: ROOT, env: { ...process.env, UNDERSTANDING_STUDENT: cfg, UNDERSTANDING_ACTOR_LOG: '1', ...(arm === 'notes' ? { LUNA_COURSE_MODEL: 'off' } : {}) }, stdio: ['ignore', logFd, logFd] });
+          { cwd: ROOT, env: { ...process.env, UNDERSTANDING_STUDENT: cfg, UNDERSTANDING_ACTOR_LOG: '1', ...(arm === 'notes' ? { PLATO_COURSE_MODEL: 'off' } : {}) }, stdio: ['ignore', logFd, logFd] });
         child.on('exit', code => { slots[slot] = false; resolve(code); });
       });
       // The stand-in prints its own run directory: read it there (two runs may start the same session id in the same second).
@@ -1232,7 +1232,7 @@ async function checklist() {
 
 async function main() {
   await loadFixture(fixture);
-  // A fixture's sandbox-only server settings (e.g. LUNA_PUBLISH_WARNING_REVIEWS=provisional for bio and history): this
+  // A fixture's sandbox-only server settings (e.g. PLATO_PUBLISH_WARNING_REVIEWS=provisional for bio and history): this
   // process's backend reads them, and every stand-in (and so its sandbox server) inherits them.
   Object.assign(process.env, FX.sandboxEnv ?? {});
   if (has('--compare')) { await compare(); return; } // across fixtures, from their newest results: no backend, no model calls

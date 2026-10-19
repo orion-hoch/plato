@@ -21,6 +21,6 @@ export function createUnderstandingCodex({ gateway }) {
   // The runtime panel (V9: one call per stance, so no panelist sees another) and production check (V10), on the same setting.
   const panel = ({ work, stance, items }) => gateway.structured({ role: 'astra', instructions: P.STUDY_PANEL(stance), schema: STUDY_SHAPES.panel, promptTemplateVersion: P.VERIFY_VERSIONS.panel, timeoutMs: 120_000, effort: 'medium', input: { items } });
   const production = ({ work, items }) => gateway.structured({ role: 'astra', instructions: P.STUDY_PRODUCTION, schema: STUDY_SHAPES.production, promptTemplateVersion: P.VERIFY_VERSIONS.production, timeoutMs: 120_000, effort: 'medium', input: { items } });
-  const stage = name => ({ work, ...input }) => gateway.structured({ role: LIGHT.has(name) ? 'luna' : 'astra', instructions: PROMPTS[name], schema: STUDY_SHAPES[name], promptTemplateVersion: P.STUDY_VERSIONS[name], timeoutMs: MS, effort: EFFORT[name], input });
+  const stage = name => ({ work, ...input }) => gateway.structured({ role: LIGHT.has(name) ? 'plato' : 'astra', instructions: PROMPTS[name], schema: STUDY_SHAPES[name], promptTemplateVersion: P.STUDY_VERSIONS[name], timeoutMs: MS, effort: EFFORT[name], input });
   return { studyWriter: { ...Object.fromEntries(Object.keys(PROMPTS).map(name => [name, stage(name)])), narrow, panel, production } };
 }

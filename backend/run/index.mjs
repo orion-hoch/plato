@@ -66,7 +66,7 @@ export function runC({ source, stdin = '' }) {
  */
 export async function runJs({ source, ms = 5_000 }) {
   if (!existsSync(SANDBOX)) throw new AppError('provider_unavailable', 'Running JavaScript needs macOS sandbox-exec, which is not here.');
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), 'luna-js-')));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), 'plato-js-')));
   try {
     await writeFile(path.join(dir, 'prog.mjs'), source);
     const ran = await exec(SANDBOX, ['-p', profile(process.execPath), process.execPath, '--max-old-space-size=128', 'prog.mjs'], { cwd: dir, ms });
@@ -78,7 +78,7 @@ export async function runJs({ source, ms = 5_000 }) {
 
 async function compileAndRun(source, stdin) {
   if (!existsSync(SANDBOX)) throw new AppError('provider_unavailable', 'Running C needs macOS sandbox-exec, which is not here.');
-  const dir = await realpath(await mkdtemp(path.join(tmpdir(), 'luna-run-')));
+  const dir = await realpath(await mkdtemp(path.join(tmpdir(), 'plato-run-')));
   const tidy = text => text.replaceAll(`${dir}/`, '');
   try {
     await writeFile(path.join(dir, 'prog.c'), source);
