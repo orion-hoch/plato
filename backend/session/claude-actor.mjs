@@ -6,7 +6,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { actorPrompt, faceLine, ACTOR_TOOLS, toolList } from './agent.mjs';
-import { PROVIDER, ask, LIMIT } from '../agents.mjs';
+import { PROVIDER, ask, LIMIT, claudeEnv } from '../agents.mjs';
 
 const MARK = '@@TOOLS', THINK = '@@PLAN', SAY = '@@SAY'; // "@@THINK … a Thinking box" was refused by Opus's safeguards (13 Oct); a plan note to the student is fine
 const params = t => Object.entries(t.parameters?.properties || {}).map(([k, v]) => `${k}${(t.parameters.required || []).includes(k) ? '' : '?'}: ${v.enum ? v.enum.join('|') : v.type}`).join(', ');
@@ -28,7 +28,7 @@ ${toolList}`;
 // first word); one at a time, for the same brief, never older than 10 minutes.
 let warm = null;
 function claudeFor(args) {
-  const start = () => ({ args: JSON.stringify(args), at: Date.now(), child: spawn('claude', [...args, '--input-format', 'stream-json'], { cwd: mkdtempSync(path.join(tmpdir(), 'plato-claude-')), stdio: ['pipe', 'pipe', 'pipe'] }) });
+  const start = () => ({ args: JSON.stringify(args), at: Date.now(), child: spawn('claude', [...args, '--input-format', 'stream-json'], { cwd: mkdtempSync(path.join(tmpdir(), 'plato-claude-')), env: claudeEnv(), stdio: ['pipe', 'pipe', 'pipe'] }) });
   const ready = warm?.args === JSON.stringify(args) && warm.child.exitCode === null && Date.now() - warm.at < 600_000 ? warm : (warm?.child.kill(), start());
   warm = start(); warm.child.unref();
   return ready.child;

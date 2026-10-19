@@ -30,6 +30,8 @@ const codexFence = (cwd, dirs) => ['-c', 'default_permissions="plato"', '-c', `p
 
 // A subscription's usage limit (not a failure: the work waits for it to reset).
 export const LIMIT = /usage limit|rate limit|limit reached|hit your limit|quota|too many requests|\b429\b/i;
+// Claude gets this server's environment without its secrets (an ElevenLabs key in .env): an agent's shell could print them.
+export const claudeEnv = () => Object.fromEntries(Object.entries(process.env).filter(([k]) => /^(CLAUDE|ANTHROPIC)_/.test(k) || !/KEY|TOKEN|SECRET|PASSWORD|^ELEVENLABS_/i.test(k))); // its own sign-in stays
 const kill = child => () => child.kill('SIGTERM');
 function lines(stream, each) {
   let buffer = '';
@@ -56,11 +58,11 @@ export function agent(cwd, brief, task = 'Begin.', { model = process.env.LUNA_CL
       ? spawn(process.env.CODEX_BIN?.trim() || 'codex', ['exec', '--json', '--ephemeral', '--skip-git-repo-check', '--ignore-user-config', '--cd', cwd,
         '-m', codexModel(model), ...codexFence(cwd, dirs), '-c', 'web_search="disabled"',
         '-c', 'approval_policy="never"', '-c', `model_reasoning_effort=${JSON.stringify(effort)}`, '-c', 'project_doc_max_bytes=0',
-        '-c', `developer_instructions=${JSON.stringify(brief)}`, ...dirs.flatMap(d => ['--add-dir', d]), '-'], { cwd, env: cliEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] })
+        '-c', `developer_instructions=${JSON.stringify(brief)}`, '-'], { cwd, env: cliEnvironment(), stdio: ['pipe', 'pipe', 'pipe'] }) // dirs are read through the fence: Codex's --add-dir would make them writable
       : spawn('claude', ['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose',
         '--tools', 'Read,Write,Edit,Glob,Grep,Bash', '--allowedTools', `Bash,Edit(/${cwd}/**)`,
         '--permission-mode', 'dontAsk', ...dirs.flatMap(d => ['--add-dir', d]), '--strict-mcp-config', '--setting-sources', '', '--settings', claudeSettings(cwd, dirs),
-        '--append-system-prompt', brief], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+        '--append-system-prompt', brief], { cwd, env: claudeEnv(), stdio: ['pipe', 'pipe', 'pipe'] });
     let last = '', failed = null, err = '';
     const timer = setTimeout(kill(child), timeoutMs), stop = kill(child); // never left running on the plan after the server goes
     process.once('exit', stop);
@@ -97,7 +99,7 @@ export function ask(system, input, { model = 'opus', lane = 'heavy', effort, tim
   const cwd = mkdtempSync(path.join(tmpdir(), 'plato-ask-')); // empty: no project files, settings or memory of anyone's
   return new Promise((resolve, reject) => {
     const child = spawn('claude', ['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose', ...(onText ? ['--include-partial-messages'] : []),
-      ...(effort ? ['--effort', effort] : []), '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
+      ...(effort ? ['--effort', effort] : []), '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system], { cwd, env: claudeEnv(), stdio: ['pipe', 'pipe', 'pipe'] });
     let result = null, err = '';
     const timer = setTimeout(kill(child), timeoutMs);
     lines(child.stdout, e => {
