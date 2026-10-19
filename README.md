@@ -22,7 +22,7 @@ npm install -g @openai/codex && codex login
 Then:
 
 ```sh
-git clone <this repo> plato && cd plato
+git clone https://github.com/orion-hoch/plato && cd plato
 npm run setup        # picks your provider, installs, fetches the optional tools, builds the page
 npm start            # then open http://127.0.0.1:5188
 ```
