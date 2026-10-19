@@ -36,7 +36,21 @@ Status as of 19 Oct, in the `plato` repo (a clean copy of the lab code: no perso
 - Space, the talk key, deleted the spaces typed in the new-course form's "What are you studying for?" box (it skipped inputs, not textareas). **This bug is also live on 5188.**
 - A file dropped on the new-course form also made a second course, named after the file (the page-wide drop handler took it too). **Also on 5188.**
 - With no course yet, the course panel showed placeholders forever. It now opens the new-course form.
+- A board Plato wrote never appeared when no topic guide was loaded yet (a new course still building, the opening): the page threw on `guide.current.id`. **Also on 5188.**
+- On a new install no kit could pass: the figures folder didn't exist yet, so drawing the examples failed.
 - Claude's command allowlist blocked ordinary agent commands (`python3 x.py | tee out`). Agents now run any command inside the sandbox, which is the real fence.
+
+## Full test on ChatGPT (19 Oct)
+
+This was a new course on a fresh data folder: "MUS 1101 Music Theory", one page of notes, `npm start`, `PLATO_PROVIDER=codex`.
+- **Build:** about 26 minutes in all, with 4 units and 28 topics.
+  - Planned in about 1.5 minutes.
+  - All 4 units audited.
+  - 2 practice exams, each re-solved by a second agent.
+  - 2 test lessons, judged 10/9/9 and 10/8/9 (accuracy, completeness, teaching).
+- **Kit:** the build chose a staff-notation kit (VexFlow) without being told to. After the figures-folder fix it drew its 6 examples and passed its check. I checked the pictures by hand (interval, E♭ major signature in bass clef, vii° triad, deceptive cadence) and they are right.
+- **Live:** Plato answered on ChatGPT in a few seconds and wrote boards. Asked for a deceptive cadence, he drew it with the kit, correctly. The chat and board came back after a reload.
+- **Not yet run on Claude in this repo:** the course build and kits. The lab's OChem test ran the same prompts on Claude; the runner and fences here are new. I skipped it so it wouldn't compete with live study on the same Claude plan.
 
 ## Should fix for beta
 
