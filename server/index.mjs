@@ -1,5 +1,5 @@
 import { createServer } from 'node:http';
-import { createReadStream, readFileSync, writeFileSync, mkdirSync, readdirSync } from 'node:fs';
+import { createReadStream, readFileSync, writeFileSync, mkdirSync, readdirSync, existsSync } from 'node:fs';
 import { realpath, stat, writeFile, rename, copyFile, readFile } from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -11,10 +11,13 @@ import { createLiveProviders } from '../backend/providers/live.mjs';
 import { createHttpHandler } from '../backend/http/index.mjs';
 import { localActor } from '../backend/session/agent.mjs';
 import { claudeActor } from '../backend/session/claude-actor.mjs';
+import { PROVIDER, signedIn } from '../backend/agents.mjs';
 import { reviewVerdict, verdictNote } from '../backend/session/review.mjs';
 import { speakText, ttsEngine } from '../backend/session/tts.mjs';
 import { transcribe, wakeEars } from '../backend/session/stt.mjs';
-import { BUNDLE as CIRCUIT_BUNDLE } from '../backend/session/circuit.mjs';
+import { BUNDLE as CIRCUIT_BUNDLE, circuitsReady } from '../backend/session/circuit.mjs';
+import { SKILL as ANATOMY_SKILL } from '../backend/session/anatomy.mjs';
+import { ready as manimReady } from '../backend/session/animate.mjs';
 import { SHELF_DIR } from '../backend/lessons/kits.mjs';
 import { textOf, addSource, buildCourse, buildDue, buildState, hasGuide, saveNote, notesOf } from '../backend/lessons/build-course.mjs';
 import { publishGuide } from '../backend/lessons/guide-manifest.mjs';
@@ -37,8 +40,8 @@ const clock = clockOffset ? { ...baseClock, now: () => baseClock.now() + clockOf
 // The reply path's lanes run on a Codex process of their own: with one process for every lane, live turns waited behind the
 // course model's builds inside it (11 Oct: think took 75 s while four topics were being studied).
 const LIVE_LANES = new Set(['director', 'reply', 'replyLight', 'elements', 'voice']);
-// LUNA_MODELS=claude: every lane on the signed-in Claude CLI, no Codex (server/claude-runtime.mjs).
-const makeRuntime = process.env.LUNA_MODELS === 'claude' ? createClaudeRuntime : createRuntime;
+// The student's provider (PLATO_PROVIDER, backend/agents.mjs) runs every lane: Claude (server/claude-runtime.mjs) or ChatGPT (Codex).
+const makeRuntime = PROVIDER === 'claude' ? createClaudeRuntime : createRuntime;
 const liveRuntime = makeRuntime({ env: process.env }), backgroundRuntime = makeRuntime({ env: process.env });
 const runtime = {
   roles: liveRuntime.roles,
@@ -51,8 +54,8 @@ const app = createBackend({
   blobDir: path.join(dataDir, 'blobs'),
   clock,
   providers: createLiveProviders({ runtime, clock }),
-  // LUNA_KNOWLEDGE=guide: new courses publish their topics from their files and study guide (the harness), with no knowledge build.
-  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), figureDir, animationDir, knowledgeSource: process.env.LUNA_KNOWLEDGE === 'guide' ? 'guide' : null }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
+  // New courses publish their topics from their files and study guide (the harness); LUNA_KNOWLEDGE=build: the older knowledge build.
+  config: { sessionTickMs: 250, studyDir: path.join(dataDir, 'study-guides'), figureDir, animationDir, knowledgeSource: process.env.LUNA_KNOWLEDGE === 'build' ? null : 'guide' }, // the agenda's held notes; each exam's study guide (backend/lessons/study.mjs); anatomy figures
 });
 const api = createHttpHandler(app, { localPrincipalFile: path.join(dataDir, 'local-principal.json') });
 app.jobs.releaseOrphanedLeases();
@@ -62,17 +65,16 @@ for (const exam of app.db.find('exams').filter(e => !['deleted', 'deleting'].inc
   try { app.services.understanding.kick({ tenantId: exam.scope.tenantId, learnerId: exam.scope.learnerId, examId: exam.id }); }
   catch (error) { console.error(`Course model for ${exam.title}: ${error.message}`); }
 }
-runtime.ready().catch(error => console.error(`Codex CLI unavailable: ${error.message}. Run \`codex login\`.`));
+runtime.ready().catch(error => console.error(`${PROVIDER === 'codex' ? 'Codex' : 'Claude'} CLI unavailable: ${error.message}. Run \`npm run setup\`.`));
 
 // The harness (15 Oct, the user: "an available harness that allows for users to input material and study"): every file
 // uploaded to a course becomes a source Plato can look up and read, and a course with material and no study guide gets one
 // built by Claude agents (backend/lessons/build-course.mjs), one course at a time, two minutes after its last upload.
-// ponytail: courses made before HARNESS_SINCE were built by hand (CS 3410, CS 2800) or are old tests, and are left alone.
 // SETTLE_MS: a batch of files dropped together arrives within seconds (19 Oct: 30 s was a third of a new file's time to the guide).
-const HARNESS_SINCE = '2026-10-15T21:00:00Z', SETTLE_MS = 10_000;
+const SETTLE_MS = 10_000;
 let courseBuilding = null;
 async function harnessTick() {
-  for (const exam of app.db.find('exams').filter(e => (e.createdAt >= HARNESS_SINCE || e.knowledgeSource === 'guide') && !['deleted', 'deleting'].includes(e.status))) {
+  for (const exam of app.db.find('exams').filter(e => e.knowledgeSource === 'guide' && !['deleted', 'deleting'].includes(e.status))) {
     const dir = path.join(dataDir, 'study-guides', exam.id), seenFile = path.join(dir, 'sources', '.seen.json');
     const files = app.db.find('source_files', {}, { scope: exam.scope }).filter(f => f.currentSourceVersionId && !['deleted', 'failed'].includes(f.status));
     // A guide written before the harness ran it (by hand, CS 2800): what is in sources/ before this tick's new files is what it was written from, so
@@ -137,9 +139,7 @@ async function voiceToken(req, res) {
   return true;
 }
 
-// Development only (never for learners): LUNA_LOCAL_ACTOR=1 on a development server lets the page play Plato's voice on
-// a local model (the page opened with ?local-actor): POST /dev/actor { context, dialogue } → { say, tools }, the same
-// actor round the stand-in runs (localActor, ACTOR_PROMPT v2). The full UI is then testable without ElevenLabs.
+// Development only, on this Mac: LUNA_LOCAL_ACTOR=1 adds Plato's spoken voice and hearing (/dev/tts, /dev/stt).
 const localActorOn = !production && process.env.LUNA_LOCAL_ACTOR === '1';
 // Development only, with the local actor: POST /dev/tts { text } → audio/wav, Plato's voice on this Mac (Kokoro through mlx-audio
 // when set up, else macOS say); GET /dev/tts gives { engine }.
@@ -174,22 +174,24 @@ function briefOf(dir) {
   return writing ? `${brief}\n\nTheir study guide is still being written from their material (${st.state === 'planning' ? 'planning its units' : `${st.done?.length || 0} of ${st.units?.length || '?'} units ready`}); until a topic arrives as context, teach from their material itself with look_up and read.`.trim() : brief;
 }
 // A colleague's check of Plato's verdict on their work (backend/session/review.mjs): the page asks after a reply that judges
-// what they wrote, and a real misjudgment comes back as a quiet note for his next turn. With the Claude brain, LUNA_REVIEW≠0.
-async function devCheck(req, res) {
-  if (!localActorOn || new URL(req.url, 'http://localhost').pathname !== '/dev/check') return false;
+// what they wrote, and a real misjudgment comes back as a quiet note for his next turn. LUNA_REVIEW=0 turns it off.
+async function checkRoute(req, res) {
+  if (new URL(req.url, 'http://localhost').pathname !== '/check') return false;
   const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
   if (req.method !== 'POST') { send(405, { error: 'Use POST.' }); return true; }
   if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) { send(403, { error: 'Only from this page.' }); return true; }
   const parts = []; let size = 0;
   for await (const part of req) { size += part.length; if (size > 64_000) { send(413, { error: 'Too large.' }); return true; } parts.push(part); }
   let body; try { body = JSON.parse(Buffer.concat(parts).toString('utf8') || '{}'); } catch { send(400, { error: 'Invalid JSON.' }); return true; }
-  if (process.env.LUNA_ACTOR_BRAIN !== 'claude' || process.env.LUNA_REVIEW === '0') { send(200, { note: null }); return true; }
+  if (!signedInPage(req)) { send(401, { error: 'Sign in first.' }); return true; }
+  if (process.env.LUNA_REVIEW === '0') { send(200, { note: null }); return true; }
   const errors = await reviewVerdict({ exchange: String(body.exchange || '').slice(-12_000), course: String(body.course || '').slice(0, 8000) });
   send(200, { note: errors ? verdictNote(errors) : null });
   return true;
 }
 // The course is the signed-in learner's own (the Bearer token the API takes; 19 Oct audit: these routes had no login).
 function ownCourse(req, examId) { try { app.auth.requireExam(app.auth.authenticate(req.headers.authorization), examId); return true; } catch { return false; } }
+function signedInPage(req) { try { return !!app.auth.authenticate(req.headers.authorization); } catch { return false; } }
 // What the student says a file they add is ("What is this?" in src/Material.jsx): { filename, note, model } for
 // <study dir>/<examId>/notes.json, which goes at the top of Plato's brief at once and steers the harness (build-course.mjs saveNote).
 async function materialNote(req, res) {
@@ -234,8 +236,9 @@ async function checkpoint(req, res) {
   send(200, { saved: body.savedAt });
   return true;
 }
-async function devActor(req, res) {
-  if (!localActorOn || new URL(req.url, 'http://localhost').pathname !== '/dev/actor') return false;
+// Plato's turn (src/local-actor.js): POST /actor { course, face, context, dialogue } → { say, tools }; ?stream=1 streams it.
+async function actorRoute(req, res) {
+  if (new URL(req.url, 'http://localhost').pathname !== '/actor') return false;
   const send = (status, body) => { res.writeHead(status, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(body)); };
   if (req.method !== 'POST') { send(405, { error: 'Use POST.' }); return true; }
   if (req.headers.origin && req.headers.origin !== `http://${req.headers.host}`) { send(403, { error: 'Only from this page.' }); return true; }
@@ -245,21 +248,22 @@ async function devActor(req, res) {
   const lines = list => (Array.isArray(list) ? list : []).map(x => String(x).slice(0, 8000)).slice(-200);
   // The course's part of Plato's brief: <study dir>/<examId>/brief.md, for the course open on the page.
   const course = /^exam_[\w-]{6,40}$/.test(String(body.course || '')) ? body.course : null;
+  if (course ? !ownCourse(req, course) : !signedInPage(req)) { send(401, { error: 'Sign in first.' }); return true; }
   const f = body.face && typeof body.face === 'object' ? body.face : null, cut = (x, n) => x ? String(x).slice(0, n) : null;
   const turn = { face: f && { face: cut(f.face, 20), topic: cut(f.topic, 200), note: cut(f.note, 600), by: cut(f.by, 10) }, context: lines(body.context), dialogue: lines(body.dialogue), brief: course ? briefOf(path.join(dataDir, 'study-guides', course)) : '' };
   // ?stream=1: newline-delimited JSON, the message as it is written ({ t: 'text', d }) then { t: 'done', say, tools }.
-  // LUNA_ACTOR_BRAIN=claude: Claude (claudeActor, the user's Claude login), falling back to the local model if it fails.
+  // The student's provider (claudeActor), falling back to the light lane's actor (localActor) if it fails before writing.
   if (new URL(req.url, 'http://localhost').searchParams.get('stream') === '1') {
     res.writeHead(200, { 'Content-Type': 'application/x-ndjson', 'Cache-Control': 'no-store' });
     const out = obj => res.write(`${JSON.stringify(obj)}\n`);
     let wrote = false;
     try {
-      if (process.env.LUNA_ACTOR_BRAIN !== 'claude') throw Object.assign(new Error('local'), { local: true });
       const r = await claudeActor(turn, { onText: d => { wrote = true; out({ t: 'text', d }); }, onThink: d => out({ t: 'think', d }) });
       out({ t: 'done', ...r });
     } catch (error) {
-      if (!error.local) console.warn(`Claude actor: ${String(error?.message || error).slice(0, 200)}; the local model answers.`);
-      if (wrote) out({ t: 'done', say: '', tools: [] }); // part of a message is already shown: the turn ends there
+      console.warn(`Plato (${PROVIDER}): ${String(error?.message || error).slice(0, 200)}; the light model answers.`);
+      if (error.limit) out({ t: 'error', error: `Your ${PROVIDER === 'codex' ? 'ChatGPT' : 'Claude'} plan's usage limit is reached. Plato can go on when it resets.` });
+      else if (wrote) out({ t: 'done', say: '', tools: [] }); // part of a message is already shown: the turn ends there
       else {
         try { const r = await localActor(runtime, turn); if (r.say) out({ t: 'text', d: r.say }); out({ t: 'done', ...r }); }
         catch (e) { out({ t: 'error', error: String(e?.message || e).slice(0, 300) }); }
@@ -272,7 +276,19 @@ async function devActor(req, res) {
   catch (error) { send(502, { error: String(error?.message || error).slice(0, 300) }); }
   return true;
 }
-if (localActorOn) console.log('Dev: the local actor is on (POST /dev/actor); open the page with ?local-actor.');
+
+// What this install can do (the first-run screen, src/Setup.jsx): the provider and whether its CLI is signed in, and which
+// optional extras `npm run setup` put in place. Checked once a minute at most.
+let setupSeen = null;
+async function setupRoute(req, res) {
+  if (req.method !== 'GET' || new URL(req.url, 'http://localhost').pathname !== '/setup') return false;
+  if (!setupSeen || Date.now() - setupSeen.at > 60_000) {
+    const chrome = ['/Applications/Google Chrome.app/Contents/MacOS/Google Chrome', '/Applications/Chromium.app/Contents/MacOS/Chromium', '/usr/bin/google-chrome', '/usr/bin/google-chrome-stable', '/usr/bin/chromium', process.env.CHROME_PATH].some(p => p && existsSync(p));
+    setupSeen = { at: Date.now(), body: { provider: PROVIDER, ...(await signedIn()), extras: { circuits: circuitsReady(), figures: existsSync(path.join(ANATOMY_SKILL, 'SKILL.md')), kits: existsSync(path.join(SHELF_DIR, 'd3.js')), chrome, animations: manimReady() } } };
+  }
+  res.writeHead(200, { 'Content-Type': 'application/json', 'Cache-Control': 'no-store' }); res.end(JSON.stringify(setupSeen.body));
+  return true;
+}
 
 // An anatomy figure's page, framed on Plato's page (src/BoardStage.jsx): sandboxed wherever it is opened (its scripts run, with
 // nothing of this app's origin).
@@ -355,8 +371,7 @@ const server = createServer(async (req, res) => {
     if (await api(req, res)) return;
     if (await voiceToken(req, res)) return;
     if (await checkpoint(req, res) || await materialNote(req, res)) return;
-    if (await devActor(req, res)) return;
-    if (await devCheck(req, res)) return;
+    if (await actorRoute(req, res) || await checkRoute(req, res) || await setupRoute(req, res)) return;
     if (await devTts(req, res)) return;
     if (await devStt(req, res)) return;
     if (await figurePage(req, res) || await animationClip(req, res) || await logicSim(req, res) || await shelfFile(req, res)) return;
@@ -380,7 +395,7 @@ else {
   // The data isn't the app's source: unwatched (a new anatomy figure, an .html in data/figures, made Vite reload the page).
   vite = await createViteServer({ root, server: { middlewareMode: true, ws: { server }, allowedHosts: ['localhost', '127.0.0.1'], watch: { ignored: [`${dataDir}/**`] } }, appType: 'spa' });
 }
-server.listen(port, '127.0.0.1', () => console.log(`Luna Study is ready at http://127.0.0.1:${port}`));
+server.listen(port, '127.0.0.1', () => console.log(`Plato is ready at http://127.0.0.1:${port} (on ${PROVIDER === 'codex' ? 'ChatGPT' : 'Claude'})`));
 
 // A stray rejection in background work is logged, not fatal: jobs are durable and their leases are retried.
 process.on('unhandledRejection', error => console.error('Unhandled rejection:', error));

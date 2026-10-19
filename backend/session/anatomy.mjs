@@ -3,7 +3,7 @@
 // anatomy, MIT; cloned into tools/anatomy). The skill runs headless in the Claude Code CLI on the user's own Claude login, as
 // Plato's brain does (claude-actor.mjs), with file tools and node only. It is slow on purpose (minutes): Plato teaches on while
 // it is built, and the finished page goes on theirs in a sandboxed frame (server/index.mjs serves it at /figures/<id>.html).
-import { spawn } from 'node:child_process';
+import { agent as runAgent } from '../agents.mjs';
 import { existsSync, mkdirSync, mkdtempSync, readFileSync, statSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
@@ -49,42 +49,24 @@ export function addToLibrary(dir, entry) {
 export function buildFigure({ idea, object = '' }, { out, onStage = () => {}, model = process.env.LUNA_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
   if (!existsSync(path.join(SKILL, 'SKILL.md'))) return Promise.reject(new Error(`the anatomy skill is missing: git clone https://github.com/wheresryan22/anatomy ${SKILL}`));
   const cwd = mkdtempSync(path.join(tmpdir(), 'plato-anatomy-')), page = path.join(cwd, 'figure.html'); // no project files, settings or memory of anyone's
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['-p', '--model', model, '--output-format', 'stream-json', '--verbose',
-      '--tools', 'Read,Write,Edit,Glob,Grep,Bash', '--allowedTools', 'Read,Write,Edit,Glob,Grep,Bash(node *),Bash(date),Bash(ls *),Bash(mkdir *)', '--permission-mode', 'dontAsk',
-      '--add-dir', SKILL, '--strict-mcp-config', '--setting-sources', '', '--append-system-prompt', BRIEF], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let buffer = '', result = null, err = '';
-    const timer = setTimeout(() => child.kill('SIGTERM'), timeoutMs), stop = () => child.kill('SIGTERM'); // never left running on the plan after the server goes
-    process.once('exit', stop);
-    child.on('close', () => process.off('exit', stop));
-    const step = stepper(page, onStage);
-    step({ type: 'start' });
-    child.stdout.on('data', chunk => {
-      buffer += chunk;
-      for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
-        const line = buffer.slice(0, nl).trim(); buffer = buffer.slice(nl + 1);
-        let e; try { e = JSON.parse(line); } catch { continue; }
-        if (e.type === 'result') { result = e; step({ type: 'result' }); }
-        if (e.type !== 'assistant') continue;
-        for (const c of e.message?.content || []) if (c.type === 'tool_use') step({ type: 'tool', name: c.name, input: c.input || {} });
-      }
-    });
-    child.stderr.on('data', d => { err += d; });
-    child.on('error', error => { clearTimeout(timer); reject(error); });
-    child.on('close', code => {
-      clearTimeout(timer);
-      if (!existsSync(page)) return reject(new Error(`no figure came (${code}): ${String(result?.result || err).trim().slice(0, 200)}`));
+  const step = stepper(page, onStage);
+  step({ type: 'start' });
+  // The skill's capture runs headless Chrome from node: Claude's sandbox lets the shell reach no network (Chrome's own loopback
+  // aside), and writes stay in this folder.
+  return runAgent(cwd, BRIEF, `Explain: ${idea}${object ? `\nThe machine they have in mind: ${object}` : ''}`, { model, timeoutMs, dirs: [SKILL], onStep: e => step({ type: 'tool', ...e }) })
+    .catch(error => { if (!existsSync(page)) throw error; return ''; }) // what it built before it failed or ran out of time still goes up
+    .then(said => {
+      step({ type: 'result' });
+      if (!existsSync(page)) throw new Error(`no figure came: ${String(said).trim().slice(0, 200)}`);
       mkdirSync(path.dirname(out), { recursive: true });
       const html = readFileSync(page, 'utf8'), end = html.toLowerCase().lastIndexOf('</body>'); // the last: the kit's inlined script has one too
       writeFileSync(out, end < 0 ? html + EMBED : html.slice(0, end) + EMBED + html.slice(end));
       // Its title: the first line, or the quoted title in it ('Title: "4-bit register" (the page is …)'); the page's own <title>
       // when that line is the builder talking about its work (15 Oct: "I built figure.html and the build checks pass…").
-      const note = String(result?.result || '').trim(), first = note.split('\n')[0].replace(/[*#_`]/g, ''), quoted = /["“]([^"”]+)["”]/.exec(first)?.[1];
-      const said = (quoted || first.replace(/^title:\s*/i, '')).trim(), own = /<title>([^<]{2,120})<\/title>/i.exec(html)?.[1]?.trim();
-      resolve({ title: (!said || /^(I|The figure|Built|Done)\b/.test(said) || said.length > 80 ? own || said : said).slice(0, 120) || 'Figure', note: note.slice(0, 1200) });
+      const note = String(said || '').trim(), first = note.split('\n')[0].replace(/[*#_`]/g, ''), quoted = /["“]([^"”]+)["”]/.exec(first)?.[1];
+      const named = (quoted || first.replace(/^title:\s*/i, '')).trim(), own = /<title>([^<]{2,120})<\/title>/i.exec(html)?.[1]?.trim();
+      return { title: (!named || /^(I|The figure|Built|Done)\b/.test(named) || named.length > 80 ? own || named : named).slice(0, 120) || 'Figure', note: note.slice(0, 1200) };
     });
-    child.stdin.end(`Explain: ${idea}${object ? `\nThe machine they have in mind: ${object}` : ''}`);
-  });
 }
 
 // Real progress (16 Oct, the user: "real progress indicators instead of dead air"): the builder's own steps, read from its stream

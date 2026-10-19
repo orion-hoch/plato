@@ -7,14 +7,12 @@ import { isSpeech } from '../tutor-bridge.js';
 import { echo } from './channel.js';
 import { liveReading } from '../elements/Reading.jsx';
 
-// VITE_ELEVENLABS_AGENT_ID names a public agent to talk to without the server's token. Development only:
-// ?local-actor plays Plato on a local model instead (src/local-actor.js; never in a production build, never ElevenLabs).
-// Local is also the default when .env sets VITE_LOCAL_ACTOR (13 Oct: ElevenLabs credits ran out; a page opened without the flag kept
-// reconnecting to it); ?local-actor=off goes back to ElevenLabs.
+// Plato is a text chat on the student's own model (src/local-actor.js, server /actor), in every build. ?local-actor=speak (development,
+// on a Mac) also speaks his lines; the ElevenLabs voice agent only when the build sets VITE_VOICE=eleven (or ?local-actor=off).
 const LOCAL = (() => {
-  if (!import.meta.env.DEV || !globalThis.location) return null;
-  const asked = new URLSearchParams(location.search).get('local-actor'), chosen = asked ?? (import.meta.env.VITE_LOCAL_ACTOR || null);
-  return chosen === 'off' ? null : chosen;
+  const asked = globalThis.location ? new URLSearchParams(location.search).get('local-actor') : null;
+  const chosen = asked ?? (import.meta.env.VITE_VOICE === 'eleven' ? 'off' : 'text');
+  return chosen === 'off' ? null : chosen === 'speak' && !import.meta.env.DEV ? 'text' : chosen;
 })();
 export const VOICE = LOCAL !== null
   ? { agentId: 'local', mediaDevices: null, workletPath: '', textOnly: LOCAL !== 'speak', loadConversation: () => import('../local-actor.js').then(m => m.localConversation({ speak: LOCAL === 'speak' })) }

@@ -1,10 +1,7 @@
 // A colleague's check of what Plato just put on the page (15 Oct lesson evals: a board said "P(21) is false" when 21 = 4×3 + 9×1
 // is reachable, and his own compute tool sat unused). In the background, never in his way: a board is read by a second model
 // against the topic's own rules; a real error comes back to him as a quiet note to fix on his next turn.
-import { spawn } from 'node:child_process';
-import { mkdtempSync } from 'node:fs';
-import { tmpdir } from 'node:os';
-import path from 'node:path';
+import { ask as askModel } from '../agents.mjs';
 
 const BRIEF = `You check one board (slide) a tutor just wrote on a student's whiteboard, for errors only. Work every claim, number, count, example and proof step out yourself. Report only what is actually wrong or materially misleading: a false statement, a wrong value, a claim missing a condition it needs (finite, non-empty, a convention), a step that does not follow. Not style, not omissions, not things done differently from how you would. The course's definitions and conventions (when given) are the standard.
 Reply with exactly OK when there is nothing wrong. Otherwise one line per error: what it says, why it is wrong, and the correct version. Nothing else. Never write the middle dot character; write multiplication as ×.`;
@@ -15,20 +12,8 @@ export function reviewBoard({ title = '', text = '', course = '' }, { model = pr
   return ask(BRIEF, `${course ? `THE COURSE'S DEFINITIONS AND CONVENTIONS FOR THIS TOPIC:\n${String(course).slice(0, 6000)}\n\n` : ''}THE BOARD:\n${title ? `${title}\n` : ''}${text}`, { model, timeoutMs });
 }
 
-/** One tool-less `claude -p` call in an empty folder: its reply text; rejects when it fails or runs past `timeoutMs`. */
-export function claude(system, input, { model = 'opus', timeoutMs = 600_000 } = {}) {
-  const cwd = mkdtempSync(path.join(tmpdir(), 'plato-check-'));
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['-p', '--model', model, '--tools', '', '--strict-mcp-config', '--setting-sources', '', '--system-prompt', system], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let out = '', err = '';
-    const timer = setTimeout(() => child.kill('SIGTERM'), timeoutMs);
-    child.stdout.on('data', d => { out += d; });
-    child.stderr.on('data', d => { err += d; });
-    child.on('error', error => { clearTimeout(timer); reject(error); });
-    child.on('close', code => { clearTimeout(timer); if (code === 0) resolve(out.trim()); else reject(new Error(err.slice(0, 300) || `claude exited ${code}`)); });
-    child.stdin.end(input);
-  });
-}
+/** One tool-less call on the student's provider (backend/agents.mjs): its reply text; rejects when it fails or runs past `timeoutMs`. */
+export const claude = (system, input, { model = 'opus', timeoutMs = 600_000 } = {}) => askModel(system, input, { model, timeoutMs, lane: 'check' });
 
 /** One check: its reply, or null for OK (or when it couldn't run). */
 const ask = (system, input, options) => claude(system, input, options).then(said => !said || /^ok\b[.!]?$/i.test(said) ? null : said.slice(0, 1500), () => null);

@@ -46,6 +46,8 @@ export function runtimeRoles(env = process.env) {
     // The voice's model for the stand-in and the dev-only local actor (ElevenLabs hosts it live). Codex on a ChatGPT account
     // can't run gpt-6.1-sol, so the nearest it can: gpt-6-sol at the voice's effort.
     voice: { ...voice, model: voice.model === 'gpt-6.1-sol' ? 'gpt-6-sol' : voice.model, tier, limit: 2 },
+    actor: { model: deep.model, effort: env.LUNA_ACTOR_EFFORT?.trim() || 'medium', tier, limit: 2 }, // Plato himself on ChatGPT (backend/agents.mjs ask)
+    check: { model: deep.model, effort: 'medium', limit: 4 }, // a colleague's checks of his boards and verdicts (backend/session/review.mjs)
     // Background.
     heavy: { ...deep, limit: 16 }, // the course build, validators, learner, questions, modules, attach, the course model
     exam: { model: deep.model, effort: 'high', limit: 3 }, // exam problems: a long authoring run never queues ahead of the rest

@@ -1,15 +1,15 @@
-// Development only, never shown to learners: Plato's voice played by a local model, so the whole page can be tested
-// without ElevenLabs. A development build opened with ?local-actor (and ?local-actor=speak to hear him through the
-// browser's speechSynthesis), on a server started with LUNA_LOCAL_ACTOR=1 (POST /dev/actor runs localActor: ACTOR_PROMPT
-// v2 on the light model, the stand-in's actor). It stands in for the ElevenLabs SDK's Conversation: text in (typed lines,
-// the page's notes and turns), Plato's lines out as the SDK reports them, the page's client tools called as the agent
-// calls them.
+// Plato in the text chat, on the student's own model (server POST /actor: claudeActor on Claude or ChatGPT; ?local-actor=speak in
+// development also speaks him on this Mac). It stands in for the ElevenLabs SDK's Conversation: text in (typed lines, the page's
+// notes and turns), Plato's lines out as the SDK reports them, the page's client tools called as the agent calls them.
 import { WAITS_FOR, FACES, WORK_FACES, faceLimit } from '../backend/session/agent.mjs';
 import { asksIn, manyAsks } from '../shared/boards.mjs';
 import { speaker, readAlong } from './local-voice.js';
 import { startRecording, stopRecording } from './local-mic.js';
 import { openCourse } from './tutor-bridge.js';
 import { checkpoint, save } from './checkpoint.js';
+import { authHeader } from './backend-client.js';
+
+const post = async (url, body) => fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json', ...await authHeader().catch(() => ({})) }, body: JSON.stringify(body) }).catch(() => null);
 
 const PAGE_TOOLS = new Set(['write', 'show', 'circuit', 'kit', 'anatomy', 'animate']);
 const JUDGES = /\b(correct|right|wrong|incorrect|not quite|exactly|mistake|error|marks?|grade|valid|invalid|works|perfect|close|almost|missing|careful|nice|good)\b/i; // a reply that may judge their work
@@ -112,8 +112,8 @@ export function localConversation({ speak = false } = {}) {
     async function streamed() {
       const id = crypto.randomUUID();
       act({ type: 'start', id });
-      const response = await fetch('/dev/actor?stream=1', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recent(context, dialogue)) }).catch(() => null);
-      if (!response?.ok || !response.body) { act({ type: 'end', id }); return { error: response?.status === 404 ? 'The local actor is off: start the server with LUNA_LOCAL_ACTOR=1.' : 'The local actor failed this turn.' }; }
+      const response = await post('/actor?stream=1', recent(context, dialogue));
+      if (!response?.ok || !response.body) { act({ type: 'end', id }); return { error: !response ? 'Plato’s server is not answering. Is it running?' : 'Plato couldn’t answer that turn. Try again.' }; }
       const reader = response.body.getReader(), decoder = new TextDecoder();
       let raw = '', pending = '', said = '', done = null, started = false;
       const reading = readAlong(); // his words aloud, when the student has turned that on
@@ -147,12 +147,12 @@ export function localConversation({ speak = false } = {}) {
       act({ type: 'end', id });
       return { say: said, tools: done?.tools || [], lost: done?.lost || null };
     }
-    // A reply that judges their work is checked by a colleague in the background (server /dev/check); a real misjudgment comes
+    // A reply that judges their work is checked by a colleague in the background (server /check); a real misjudgment comes
     // back as a note for his next turn, never a turn of its own.
     function check() {
       const card = [...context].reverse().find(x => /^(STUDY GUIDE TOPIC|CARD\b|SECTION GUIDE|PRACTICE SET)/.test(x)) || '';
-      void fetch('/dev/check', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ exchange: dialogue.slice(-10).join('\n'), course: card.slice(0, 8000) }) })
-        .then(r => r.ok ? r.json() : null).then(r => { if (r?.note && !closed) voice.sendContextualUpdate(r.note); }).catch(() => {});
+      void post('/check', { exchange: dialogue.slice(-10).join('\n'), course: card.slice(0, 8000) })
+        .then(r => r?.ok ? r.json() : null).then(r => { if (r?.note && !closed) voice.sendContextualUpdate(r.note); }).catch(() => {});
     }
     async function turn(heard) {
       if (heard) dialogue.push(/^\[/.test(heard) ? heard : `Student: ${heard}`);
@@ -169,8 +169,8 @@ export function localConversation({ speak = false } = {}) {
           if (r.lost) { dialogue.push(`[Note to you, not shown to them] ${r.lost}: ${tools.length ? 'only the calls before the break ran' : 'none of them ran, so nothing you described is on the page'}. Put up what is missing now, without repeating what you said.`); lost = true; }
           if (round === 1 && heard && !/^\[/.test(heard) && line && JUDGES.test(line)) check();
         } else {
-          const response = await fetch('/dev/actor', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(recent(context, dialogue)) }).catch(() => null);
-          if (!response?.ok) { await say(response?.status === 404 ? 'The local actor is off: start the server with LUNA_LOCAL_ACTOR=1.' : 'The local actor failed this turn.'); return; }
+          const response = await post('/actor', recent(context, dialogue));
+          if (!response?.ok) { await say('Plato couldn’t answer that turn. Try again.'); return; }
           ({ say: line, tools = [] } = await response.json());
           if (line) { dialogue.push(`Plato: ${line}`); await say(line); }
         }

@@ -1218,9 +1218,9 @@ export function installDirector(app) {
     return { say: `On the page: ${b?.label || 'the next problem'}. Ask it as: "${pick.spoken}" (just that). The full problem, for you to refer to (never read it all aloud): ${full}. Their answer is checked for you: wait for [Checked].`, boardId: pick.boardId, board: b };
   }
   // A colleague's check of a board he wrote (backend/session/review.mjs), in the background; an error reaches him as a quiet note
-  // (context, never a turn). Only with Claude as his brain (LUNA_REVIEW=0 turns it off), so tests never spawn it.
+  // (context, never a turn). LUNA_REVIEW=0 turns it off; tests (node --test) never spawn it.
   function reviewLater(s, g, title, text) {
-    if (process.env.LUNA_ACTOR_BRAIN !== 'claude' || process.env.LUNA_REVIEW === '0') return;
+    if (process.env.LUNA_REVIEW === '0' || process.env.NODE_TEST_CONTEXT) return;
     void reviewBoard({ title, text, course: g?.study?.text || '' }).then(errors => { if (errors) safe(() => S().emit(s.id, 'tutor.note', { text: reviewNote(title, errors) })); });
   }
   /** POST /sessions/{id}/guide: the tutor's own moves in guide mode (show a board, move on, practise). Gives { say, boardId?, card? }. */

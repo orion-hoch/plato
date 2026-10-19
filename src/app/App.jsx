@@ -214,12 +214,13 @@ export default function App() {
       },
     });
     bridge.current = tutor;
+    (globalThis.__plato ??= {}).bridge = tutor; // the text chat finds the session through it (local-actor.js); the rest is development only
     // A handle for checking page states by hand (and in browser tests); nothing reaches the network through it.
     // fake() swaps the voice for one that is only this page: a check plays Plato's side through __plato.sdk
     // (onMessage, onAudioAlignment, onModeChange, …) and reads what Plato was sent in __plato.sent. `devices` stands in
     // for the browser's (say, a microphone that fails, for the text-only conversation).
     if (import.meta.env.DEV) {
-      const dev = window.__plato = {
+      const dev = window.__plato = { ...window.__plato,
         tools, setPage, setError, tell, ink, bridge: tutor, sent: [],
         setSubtitle: text => setLog(list => [...list, { id: crypto.randomUUID(), who: 'plato', text, final: true }]),
         fake: (devices = {}) => {

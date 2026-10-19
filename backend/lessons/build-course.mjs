@@ -3,7 +3,7 @@
 // search them), then Claude agents on the user's own login, headless like the anatomy builder, write the course's part of
 // Plato's brief (brief.md) and its study guide, a unit a file in the format backend/lessons/study.mjs reads, with the
 // figures worth building (figures-wanted.json). Progress in <dir>/build.json.
-import { spawn } from 'node:child_process';
+import { agent as runAgent } from '../agents.mjs';
 import { existsSync, mkdirSync, readdirSync, readFileSync, renameSync, rmSync, statSync, writeFileSync } from 'node:fs';
 import path from 'node:path';
 import { buildKits } from './kits.mjs';
@@ -220,33 +220,13 @@ Reply with one line: how many fixes.`;
 
 const practiceLine = (dir, names) => `Practice exams made for this course (new problems in the real exams' format, every answer re-solved and simulated by a second agent; read one by name, e.g. read "practice exam ${names[0]}"): ${names.map(n => `${n} (${(readFileSync(path.join(dir, 'practice', `${n}.md`), 'utf8').match(/^## .+$/gm) || []).map(h => h.replace(/^## /, '')).join('; ')})`).join('. ')}. In Exam drill, set one question at a time as the exam does, its parts in order, and hold the solution until they have answered; never show a whole exam's solutions at once.`;
 
-// Uploaded material is untrusted and these agents run python3 and node unattended: their commands run in Claude Code's OS
-// sandbox (writes only inside the course folder, no network), never outside it. ponytail: Read can still open files elsewhere
-// (what it reads could end up in the guide, shown to this user only); a container per build if strangers share a machine.
-const SANDBOX = JSON.stringify({ sandbox: { enabled: true, autoAllowBashIfSandboxed: false, allowUnsandboxedCommands: false } });
-
+// Uploaded material is untrusted and these agents run python3 and node unattended: in the OS sandbox (writes only inside the
+// course folder, no network), on the student's own provider (backend/agents.mjs).
 const readJson = file => { try { return JSON.parse(readFileSync(file, 'utf8')); } catch { return null; } };
 const sourceNames = dir => { try { return readdirSync(path.join(dir, 'sources')).filter(f => f.endsWith('.md')).sort(); } catch { return []; } };
 
-/** One headless Claude agent working in `cwd` with file tools (and python3/node for checks). Resolves with its last message. */
-function agent(cwd, brief, { model = process.env.LUNA_CLAUDE_MODEL || 'opus', timeoutMs = 40 * 60_000 } = {}) {
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['-p', '--model', model, '--output-format', 'json',
-      '--tools', 'Read,Write,Edit,Glob,Grep,Bash', '--allowedTools', 'Read,Write,Edit,Glob,Grep,Bash(python3 *),Bash(node *),Bash(ls *),Bash(mkdir *),Bash(wc *),Bash(head *),Bash(grep *)',
-      '--permission-mode', 'dontAsk', '--strict-mcp-config', '--setting-sources', '', '--settings', SANDBOX, '--append-system-prompt', brief], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let out = '', err = '';
-    const timer = setTimeout(() => child.kill('SIGTERM'), timeoutMs), stop = () => child.kill('SIGTERM'); // never left running on the plan after the server goes
-    process.once('exit', stop);
-    child.stdout.on('data', d => { out += d; });
-    child.stderr.on('data', d => { err += d; });
-    child.on('close', code => {
-      clearTimeout(timer); process.off('exit', stop);
-      let r = null; try { r = JSON.parse(out); } catch { /* not JSON */ }
-      if (code === 0 && r && !r.is_error) resolve(String(r.result || '')); else reject(new Error(`agent failed (${code}): ${String(r?.result || err).slice(0, 300)}`));
-    });
-    child.stdin.end('Begin.');
-  });
-}
+/** One headless agent working in `cwd` with file tools (and python3/node for checks). Resolves with its last message. */
+const agent = (cwd, brief, options) => runAgent(cwd, brief, 'Begin.', options);
 
 /** What is wrong with a written unit, or null: it parses into topics that each have their teaching blocks and tries. */
 function unitProblems(file) {

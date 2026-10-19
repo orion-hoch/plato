@@ -3,7 +3,7 @@
 // writes one Manim CE scene, renders it at 480p15 with tools/manim/render.sh (the venv's manim, TinyTeX, ffmpeg), looks at
 // its frames and fixes what it sees. Plato teaches on meanwhile; the MP4 goes on the page as a video (served at
 // /animations/<id>.mp4). Cached by its `about`: the same request is the same clip, up at once.
-import { spawn } from 'node:child_process';
+import { agent as runAgent } from '../agents.mjs';
 import { createHash } from 'node:crypto';
 import { copyFileSync, existsSync, mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
@@ -48,41 +48,21 @@ export function cachedAnimation(dir, id) {
 export function buildAnimation({ about, title = '' }, { dir, onStage = () => {}, model = process.env.LUNA_CLAUDE_MODEL || 'opus', timeoutMs = BUDGET_MS } = {}) {
   if (!ready()) return Promise.reject(new Error('Manim is not installed: tools/manim/.venv (uv venv --python 3.12; uv pip install manim)'));
   const id = animationId(about), cwd = mkdtempSync(path.join(tmpdir(), 'plato-manim-')), clip = path.join(cwd, 'out.mp4'); // no project files, settings or memory of anyone's
-  return new Promise((resolve, reject) => {
-    const child = spawn('claude', ['-p', '--model', model, '--output-format', 'stream-json', '--verbose',
-      '--tools', 'Read,Write,Edit,Bash', '--allowedTools', `Read,Write,Edit,Bash(${RENDER} *),Bash(ls *)`, '--permission-mode', 'dontAsk',
-      '--strict-mcp-config', '--setting-sources', '', '--append-system-prompt', BRIEF], { cwd, stdio: ['pipe', 'pipe', 'pipe'] });
-    let buffer = '', result = null, err = '';
-    const timer = setTimeout(() => child.kill('SIGTERM'), timeoutMs), stop = () => child.kill('SIGTERM');
-    process.once('exit', stop);
-    child.on('close', () => process.off('exit', stop));
-    const step = stepper(onStage);
-    step({ type: 'start' });
-    child.stdout.on('data', chunk => {
-      buffer += chunk;
-      for (let nl = buffer.indexOf('\n'); nl >= 0; nl = buffer.indexOf('\n')) {
-        const line = buffer.slice(0, nl).trim(); buffer = buffer.slice(nl + 1);
-        let e; try { e = JSON.parse(line); } catch { continue; }
-        if (e.type === 'result') { result = e; step({ type: 'result' }); }
-        if (e.type !== 'assistant') continue;
-        for (const c of e.message?.content || []) if (c.type === 'tool_use') step({ type: 'tool', name: c.name, input: c.input || {} });
-      }
-    });
-    child.stderr.on('data', d => { err += d; });
-    child.on('error', error => { clearTimeout(timer); reject(error); });
-    child.on('close', code => {
-      clearTimeout(timer);
-      const note = String(result?.result || '').trim();
-      if (!existsSync(clip)) return reject(new Error(`no clip came (${code}): ${(note || err).slice(0, 200)}`));
+  const step = stepper(onStage);
+  step({ type: 'start' });
+  return runAgent(cwd, BRIEF, `Animate: ${about}${title ? `\nIts title: ${title}` : ''}`, { model, timeoutMs, onStep: e => step({ type: 'tool', ...e }) })
+    .catch(error => { if (!existsSync(clip)) throw error; return ''; })
+    .then(said => {
+      step({ type: 'result' });
+      const note = String(said || '').trim();
+      if (!existsSync(clip)) throw new Error(`no clip came: ${note.slice(0, 200)}`);
       mkdirSync(dir, { recursive: true });
       copyFileSync(clip, path.join(dir, `${id}.mp4`));
-      const said = note.split('\n')[0].replace(/[*#_`"“”]/g, '').replace(/^title:\s*/i, '').trim();
-      const made = { id, title: (title || (said.length <= 80 && said) || 'Animation').slice(0, 120), about, note: note.slice(0, 1200) };
+      const first = note.split('\n')[0].replace(/[*#_`"“”]/g, '').replace(/^title:\s*/i, '').trim();
+      const made = { id, title: (title || (first.length <= 80 && first) || 'Animation').slice(0, 120), about, note: note.slice(0, 1200) };
       writeFileSync(path.join(dir, `${id}.json`), JSON.stringify(made, null, 2));
-      resolve(made);
+      return made;
     });
-    child.stdin.end(`Animate: ${about}${title ? `\nIts title: ${title}` : ''}`);
-  });
 }
 
 // Real progress (as anatomy's stepper): the builder's own steps from its stream. Write the scene, render, look at the frames,
