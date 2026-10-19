@@ -1,7 +1,7 @@
 import { spawn } from 'node:child_process';
-import { existsSync } from 'node:fs';
+import { existsSync, realpathSync } from 'node:fs';
 import { mkdtemp, realpath, rm, writeFile } from 'node:fs/promises';
-import { tmpdir } from 'node:os';
+import { homedir, tmpdir } from 'node:os';
 import path from 'node:path';
 import { s, validate } from '../core/shape.mjs';
 import { AppError } from '../core/errors.mjs';
@@ -13,12 +13,22 @@ import { AppError } from '../core/errors.mjs';
 
 const SANDBOX = '/usr/bin/sandbox-exec', COMPILE_MS = 10_000, RUN_MS = 2_000, CAP = 64 * 1024;
 const RUN = s.object({ language: s.enum(['c']), source: s.string({ min: 1, max: 20_000 }), stdin: s.string({ max: 4_000 }) }, { optional: ['stdin'] });
+// Nothing of the student's home folder is read (19 Oct audit: `#include "/Users/…/.ssh/id_rsa"` printed it in the compiler's
+// errors), except node's own install when it lives there (nvm).
+const HOME = realpathSync(homedir()), NODE = realpathSync(path.dirname(path.dirname(process.execPath)));
+const fenced = `(deny network*)
+(deny file-read* (subpath "${HOME}"))${NODE.startsWith(HOME) ? `\n(allow file-read* (subpath "${NODE}"))` : ''}`;
 const profile = program => `(version 1)
 (allow default)
-(deny network*)
+${fenced}
 (deny file-write* (require-not (literal "/dev/null")))
 (deny process-fork)
 (deny process-exec (require-not (literal "${program}")))`;
+// The compiler: it writes only in its folder and the temporary folder (its intermediate files).
+const compiling = dir => `(version 1)
+(allow default)
+${fenced}
+(deny file-write* (require-all (require-not (subpath "/private/var/folders")) (require-not (subpath "/private/tmp")) (require-not (subpath "${dir}")) (require-not (literal "/dev/null"))))`;
 
 // One process to its end, its time or its output limit: whichever comes first.
 function exec(command, args, { cwd, input = '', ms }) {
@@ -72,7 +82,7 @@ async function compileAndRun(source, stdin) {
   const tidy = text => text.replaceAll(`${dir}/`, '');
   try {
     await writeFile(path.join(dir, 'prog.c'), source);
-    const built = await exec('cc', ['-std=c17', '-O0', '-Wall', '-o', 'prog', 'prog.c'], { cwd: dir, ms: COMPILE_MS });
+    const built = await exec(SANDBOX, ['-p', compiling(dir), 'cc', '-std=c17', '-O0', '-Wall', '-o', 'prog', 'prog.c'], { cwd: dir, ms: COMPILE_MS });
     if (built.exitCode !== 0) return { ok: false, phase: 'compile', stdout: '', stderr: tidy(built.stderr || (built.timedOut ? 'Compiling took too long.' : '')), exitCode: built.exitCode, timedOut: built.timedOut };
     const program = path.join(dir, 'prog');
     const ran = await exec(SANDBOX, ['-p', profile(program), program], { cwd: dir, input: stdin, ms: RUN_MS });

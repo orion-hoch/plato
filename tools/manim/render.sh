@@ -3,7 +3,7 @@
 # rendered at 480p15 into ./out.mp4, then 4 frames (at 15%, 40%, 65%, 95% of it) as ./frame-1..4.png for it to look at.
 # PATH: the venv's manim, Homebrew's ffmpeg and TinyTeX's latex/dvisvgm (TinyTeX's `tlmgr path add` needs sudo, so not linked).
 here=$(cd "$(dirname "$0")" && pwd)
-export PATH="$here/.venv/bin:$HOME/Library/TinyTeX/bin/universal-darwin:/opt/homebrew/bin:/usr/bin:/bin"
+export PATH="$here/.venv/bin:$HOME/Library/TinyTeX/bin/universal-darwin:/opt/homebrew/bin:/usr/local/bin:$PATH"
 file=${1:-scene.py}
 rm -f out.mp4 frame-*.png
 manim render -ql -v WARNING --progress_bar none --disable_caching --media_dir ./media -o out "$file" 2>&1 | grep -v -E 'SyntaxWarning|re\.match|elif re\.|^\s*$' | tail -30
