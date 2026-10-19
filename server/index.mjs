@@ -100,7 +100,7 @@ async function harnessTick() {
     console.log(`Harness: building the study guide for ${exam.title}.`);
     courseBuilding = buildCourse(dir, { about, kits: { figureDir, baseUrl: `http://127.0.0.1:${port}` }, onStage: st => console.log(`Harness: ${exam.title}: ${st.state}${st.done ? ` (${st.done.length} of ${st.units.length} units)` : ''}`) })
       .then(r => console.log(`Harness: ${exam.title}: ${r.topics} topics in ${r.units} units${r.failed.length ? `; failed: ${r.failed.map(x => x.unit).join(', ')}` : ''}.`))
-      .catch(error => { console.error(`Harness: ${exam.title}: ${error.message}`); try { writeFileSync(path.join(dir, 'build.json'), JSON.stringify({ ...JSON.parse(readFileSync(path.join(dir, 'build.json'), 'utf8')), state: 'failed', error: String(error.message).slice(0, 500), at: new Date().toISOString() })); } catch { /* gone */ } })
+      .catch(error => { console.error(`Harness: ${exam.title}: ${error.message}`); try { writeFileSync(path.join(dir, 'build.json'), JSON.stringify({ ...JSON.parse(readFileSync(path.join(dir, 'build.json'), 'utf8')), state: error.limit ? 'paused' : 'failed', error: String(error.message).slice(0, 500), at: new Date().toISOString() })); } catch { /* gone */ } })
       .finally(() => { courseBuilding = null; });
   }
 }

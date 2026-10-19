@@ -6,7 +6,7 @@ import { mkdtempSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import path from 'node:path';
 import { actorPrompt, faceLine, ACTOR_TOOLS, toolList } from './agent.mjs';
-import { PROVIDER, ask } from '../agents.mjs';
+import { PROVIDER, ask, LIMIT } from '../agents.mjs';
 
 const MARK = '@@TOOLS', THINK = '@@PLAN', SAY = '@@SAY'; // "@@THINK … a Thinking box" was refused by Opus's safeguards (13 Oct); a plan note to the student is fine
 const params = t => Object.entries(t.parameters?.properties || {}).map(([k, v]) => `${k}${(t.parameters.required || []).includes(k) ? '' : '?'}: ${v.enum ? v.enum.join('|') : v.type}`).join(', ');
@@ -57,7 +57,7 @@ function claudeStream(system, input, { model, onDelta, timeoutMs }) {
     child.on('error', error => { clearTimeout(timer); reject(error); });
     child.on('close', code => {
       clearTimeout(timer);
-      if (!result || result.is_error || code !== 0) return reject(Object.assign(new Error(`Claude failed (${code}): ${String(result?.result || err).slice(0, 200)}`), { limit: /limit/i.test(result?.result || err) }));
+      if (!result || result.is_error || code !== 0) return reject(Object.assign(new Error(`Claude failed (${code}): ${String(result?.result || err).slice(0, 200)}`), { limit: LIMIT.test(result?.result || err) }));
       resolve(String(result.result || ''));
     });
     child.stdin.end(`${JSON.stringify({ type: 'user', message: { role: 'user', content: input } })}\n`);

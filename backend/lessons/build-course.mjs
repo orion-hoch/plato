@@ -278,6 +278,7 @@ export async function buildCourse(dir, { about = '', onStage = () => {}, atOnce 
   const installed = u => existsSync(path.join(dir, u.file));
   mkdirSync(path.join(dir, 'audit'), { recursive: true });
   const done = plan.units.filter(installed).map(u => u.title), failed = [], queue = plan.units.filter(u => !installed(u)), already = done.length;
+  let limited = null; // the plan's usage limit: the build pauses (the server resumes it later) instead of failing its units
   status({ state: 'writing', units: plan.units.map(u => u.title), done: [...done] });
   async function worker() {
     for (let unit = queue.shift(); unit; unit = queue.shift()) {
@@ -285,7 +286,7 @@ export async function buildCourse(dir, { about = '', onStage = () => {}, atOnce 
       let problem = null;
       for (let attempt = 1; attempt <= 2; attempt++) {
         try { await agent(dir, attempt === 1 ? WRITE(unit, plan) : `${WRITE(unit, plan)}\n\nA first attempt at this unit failed its check (${problem}). ./drafts/${unit.file} may hold it: fix it or write it again.`); }
-        catch (error) { problem = error.message; continue; }
+        catch (error) { if (error.limit) { limited = error; queue.length = 0; return; } problem = error.message; continue; }
         problem = unitProblems(draft);
         if (!problem) break;
       }
@@ -317,6 +318,7 @@ export async function buildCourse(dir, { about = '', onStage = () => {}, atOnce 
   const kitted = kits && !existsSync(path.join(dir, 'kits', 'installed.json')) ? buildKits(dir, plan, { agent, ...kits, onStage: st => console.log(`Kits: ${plan.course}: ${st}`) }).catch(error => { console.warn(`Kits: ${error.message}`); return []; }) : Promise.resolve([]);
   let kitsDone = false; void kitted.finally(() => { kitsDone = true; });
   await Promise.all(Array.from({ length: atOnce }, worker));
+  if (limited) { await Promise.allSettled([practiced, kitted]); throw limited; }
   if (!practice) status({ state: 'practice', units: plan.units.map(u => u.title), done, failed });
   await practiced;
   if (!kitsDone) status({ state: 'kits', units: plan.units.map(u => u.title), done, failed });
@@ -364,6 +366,7 @@ export function buildDue(dir, { retryMs = 45 * 60_000, tries = 4 } = {}) {
   // One in progress here is running; one left by a server that stopped resumes now (its agents went with it).
   // ponytail: by pid, so a pid reused after a reboot looks alive until the 3-hour mark.
   if (['planning', 'updating', 'writing', 'practice', 'kits', 'checking'].includes(st.state)) return st.pid !== process.pid || Date.now() - Date.parse(st.at) > 3 * 60 * 60_000;
+  if (st.state === 'paused') return Date.now() - Date.parse(st.at) > 30 * 60_000; // a usage limit: tried again in half an hour, never given up
   return (st.attempts || 1) < tries && Date.now() - Date.parse(st.at) > retryMs;
 }
 export function buildState(dir) { try { return JSON.parse(readFileSync(path.join(dir, 'build.json'), 'utf8')); } catch { return null; } }

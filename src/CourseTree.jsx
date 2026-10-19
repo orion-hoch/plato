@@ -78,6 +78,7 @@ function readiness(g) {
   if (g.state === 'checking') return 'Testing lessons on its hardest topics…';
   if (g.state === 'updating') return 'Adding your new material to its study guide…';
   if (g.state === 'failed') return 'Its study guide couldn’t be built yet; it will try again';
+  if (g.state === 'paused') return 'Paused: your plan’s usage limit was reached. It picks up where it stopped in about half an hour';
   // What they get (17 Oct: the card read like a build log); what was checked, and what the material lacks, in its tooltip.
   return [g.topics && `${g.topics} topics in ${g.units} units`, g.practice?.length && `${g.practice.length} practice exam${g.practice.length > 1 ? 's' : ''}`].filter(Boolean).join(', ');
 }

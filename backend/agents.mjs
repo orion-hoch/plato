@@ -28,6 +28,8 @@ const claudeSettings = (cwd, dirs) => JSON.stringify({ sandbox: { enabled: true,
 // Codex: a permission profile with the same fences.
 const codexFence = (cwd, dirs) => ['-c', 'default_permissions="plato"', '-c', `permissions.plato.filesystem={${[['":root"', 'read'], ['"~"', 'deny'], ...readable(cwd, dirs).map(d => [JSON.stringify(d), 'read'])].map(([k, v]) => `${k}="${v}"`).join(', ')}, ":workspace_roots"={"."="write"}}`, '-c', 'permissions.plato.network.enabled=false'];
 
+// A subscription's usage limit (not a failure: the work waits for it to reset).
+export const LIMIT = /usage limit|rate limit|limit reached|hit your limit|quota|too many requests|\b429\b/i;
 const kill = child => () => child.kill('SIGTERM');
 function lines(stream, each) {
   let buffer = '';
@@ -77,7 +79,7 @@ export function agent(cwd, brief, task = 'Begin.', { model = process.env.LUNA_CL
     child.on('error', error => { clearTimeout(timer); process.off('exit', stop); reject(error); });
     child.on('close', code => {
       clearTimeout(timer); process.off('exit', stop);
-      if (code === 0 && !failed) resolve(last.trim()); else reject(Object.assign(new Error(`agent failed (${code}): ${String(failed || err).slice(0, 300)}`), { limit: /limit|quota|usage/i.test(failed || err) }));
+      if (code === 0 && !failed) resolve(last.trim()); else reject(Object.assign(new Error(`agent failed (${code}): ${String(failed || err).slice(0, 300)}`), { limit: LIMIT.test(failed || err) }));
     });
     child.stdin.end(task);
   });
@@ -91,7 +93,7 @@ let codexRuntime = null;
  * and effort, server/runtime.mjs runtimeRoles) a ChatGPT call takes; Claude takes `model`.
  */
 export function ask(system, input, { model = 'opus', lane = 'heavy', effort, timeoutMs = 600_000, onText } = {}) {
-  if (PROVIDER === 'codex') return (codexRuntime ??= createRuntime()).ask({ role: lane, instructions: system, input, onText, effort, timeoutMs }).then(r => r.text);
+  if (PROVIDER === 'codex') return (codexRuntime ??= createRuntime()).ask({ role: lane, instructions: system, input, onText, effort, timeoutMs }).then(r => r.text, error => { throw Object.assign(error, { limit: error.status === 429 || LIMIT.test(error.message) }); });
   const cwd = mkdtempSync(path.join(tmpdir(), 'plato-ask-')); // empty: no project files, settings or memory of anyone's
   return new Promise((resolve, reject) => {
     const child = spawn('claude', ['-p', '--no-session-persistence', '--model', model, '--output-format', 'stream-json', '--verbose', ...(onText ? ['--include-partial-messages'] : []),
@@ -107,7 +109,7 @@ export function ask(system, input, { model = 'opus', lane = 'heavy', effort, tim
     child.on('close', code => {
       clearTimeout(timer);
       if (code === 0 && result && !result.is_error) resolve(String(result.result || '').trim());
-      else reject(Object.assign(new Error(`${String(result?.result || err).slice(0, 300) || `claude exited ${code}`}`), { limit: /limit|quota|usage/i.test(result?.result || err) }));
+      else reject(Object.assign(new Error(`${String(result?.result || err).slice(0, 300) || `claude exited ${code}`}`), { limit: LIMIT.test(result?.result || err) }));
     });
     child.stdin.end(typeof input === 'string' ? input : JSON.stringify(input));
   });
