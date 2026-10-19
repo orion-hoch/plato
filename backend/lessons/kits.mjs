@@ -107,6 +107,7 @@ function capture(url, out) {
 async function drawExamples(dir, kit, { figureDir, baseUrl }) {
   const meta = readJson(path.join(dir, 'kits', kit.name, 'kit.json')), html = readFileSync(path.join(dir, 'kits', kit.name, 'kit.html'), 'utf8');
   const out = path.join(dir, 'kits', kit.name, 'check'); rmSync(out, { recursive: true, force: true }); mkdirSync(out, { recursive: true });
+  mkdirSync(figureDir, { recursive: true }); // a new install has made no figure yet (19 Oct: every kit failed there)
   const results = [];
   for (const [i, ex] of (meta?.examples || []).slice(0, 6).entries()) {
     const id = `kitprev_${path.basename(dir)}_${kit.name}_${i + 1}`;
