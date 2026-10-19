@@ -21,3 +21,8 @@ tools/logic-sim/
 tools/manim/.venv/
 tools/shelf/node_modules/
 tools/shelf/lib/
+
+# Course material and model output from it, never published: fixtures fetch or build these locally
+evals/understanding/fixtures/*/source/
+evals/understanding/fixtures/*/frozen/
+evals/understanding/frozen/calibration/
