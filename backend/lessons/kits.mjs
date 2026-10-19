@@ -37,7 +37,7 @@ Write ./kits/plan.json: {"kits": [{"name": "<lowercase-with-dashes>", "title": "
 
 Reply with one line: the kits, or none.`;
 
-const BUILD = (kit, plan) => `You build one kit, "${kit.name}" (${kit.title}), for an AI tutor (Plato) teaching ${plan.course} one-on-one. You run headless: nobody will answer a question, so decide and build. Work only in ./kits/${kit.name}/.
+const BUILD = (kit, plan) => `You build one kit, "${kit.name}" (${kit.title}), for an AI tutor (Plato) teaching ${plan.course} one-on-one. You run headless: nobody will answer a question, so decide and build. Work only in ./kits/${kit.name}/. Never write the middle dot character anywhere in what the kit shows (titles, labels): use a comma, a colon or a dash.
 
 What it is for: ${kit.why}
 
