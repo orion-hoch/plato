@@ -78,8 +78,9 @@ export function createCards({ setMaking, bridge, lastState, nextBoard, thinking,
   }
   // A guide board the voice chose (tools.js show): up as a card's show, on the section's page (thread = topicId), so the
   // section's boards stay above one another. A question board is the one to pose.
+  // No guide yet (a course still being built, the opening before a topic: 19 Oct, his boards never went up): the board's own.
   function showGuideBoard(board) {
-    const g = guide.current, show = board.show;
+    const g = guide.current || { id: board.id, topicId: null }, show = board.show;
     if (show?.kind === 'question' && bridge.current) {
       const q = g.questions?.find(x => x.id === (show.questionId ?? board.questionId));
       const question = show.question?.voiceForm ? show.question : q && { questionId: q.id, voiceForm: q.spoken };
