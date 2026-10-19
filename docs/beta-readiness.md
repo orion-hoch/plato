@@ -1,4 +1,4 @@
-# Plato beta readiness (19 Oct 2026)
+# Plato beta readiness (19 Oct 2026, updated the same day)
 
 **Goal (the owner, 19 Oct):** "plato is an open source harness that they just connect their claude or openai subscription into and be able to use."
 
@@ -19,26 +19,33 @@ This plan comes from a code audit of Luna-Study-lab on 19 Oct (file:line evidenc
 
 ## Blockers for an installable beta
 
-| # | Problem | Fix | Size |
-|---|---|---|---|
-| P1 | Everything agentic is **Claude-only**: Plato's turns (`claude-actor.mjs`), course builds and kits (`build-course.mjs` `agent`), review, anatomy, animate. Each one spawns `claude` directly. | One agent runner, `backend/agents.mjs`: `run(cwd, brief, { files, stream, model })`, backed by `claude -p` or `codex exec` (sandbox `workspace-write`, network off). Everything goes through it, with the provider chosen at setup. Each has its own prompt quirks; run lesson evals on both. | 2 days |
-| P2 | The Claude tutor works **only in Vite dev mode** (`/dev/actor`, `import.meta.env.DEV`); `npm start` has no tutor. | Make the actor a real route (`/v1/sessions/{id}/actor`, token-checked), and drop the DEV gate. | 1 day |
-| P3 | **No setup.** The Logic-sim bundle, anatomy clone, Manim venv, TinyTeX/tectonic, Chrome and the shelf are hand-installed on one Mac. | `npm run setup`: installs dependencies, builds the shelf and logic-sim, and finds Chrome; Manim and TeX are optional. A first-run screen: "Connect Claude" or "Connect ChatGPT" (runs `claude` / `codex login` status checks), and shows which extras are on. Every optional tool degrades cleanly (`circuitsReady`, `manimReady` already do). | 1.5 days |
-| P4 | **Code that runs on the student's own machine, steered by their uploads and chat:** the C runner can read any file (`backend/run/index.mjs` `(allow default)`, `cc` unsandboxed); anatomy and Manim builders run model-written code unsandboxed; build agents can Read outside the course folder. On someone's own laptop, a poisoned PDF must not read their files. | Sandbox reads too (course folder and system libs only) for the runner and every agent; the same settings for anatomy and animate. macOS seatbelt today, so Linux needs bubblewrap or no C runner. | 1 day |
-| P5 | **Upload names** could write outside the course folder. | Done in lab, 19 Oct (`path.basename`). | done |
-| P6 | **Unauthenticated local routes** (`/checkpoint`, `/material-note`, `/figures`) can be reached by any page open in the user's browser (localhost CSRF). | Done in lab for checkpoint and material-note (Bearer token + `requireExam`). Figures still to do. | 0.5 day |
-| P7 | **Hard-coded to the owner:** `HARNESS_SINCE`, CS 3410 practice-prelim helpers, the absolute ASR path, the circuit line in every course's brief (it should be a kit), `/Users/orionhoch` paths, the ElevenLabs voice. | Remove or make per-course; voice optional. | 0.5 day |
+Status as of 19 Oct, in the `plato` repo (a clean copy of the lab code: no personal data, its own git history).
+
+| # | Problem | Status |
+|---|---|---|
+| P1 | Everything agentic was Claude-only. | **Done.** `backend/agents.mjs` runs every agent and tool-less call on `PLATO_PROVIDER`: `claude -p`, or `codex exec` / `codex app-server`. Plato's turns, course builds, kits, figures, animations and checks all go through it. Tested on both: Plato's streamed turn (about 5 s each), a file agent, and a full course build on ChatGPT. Lesson evals on ChatGPT are still to run. |
+| P2 | The tutor only worked in Vite dev mode. | **Done.** `/actor` and `/check` are signed-in routes in every build, and the text chat is the default page. `npm start` serves a working tutor (tested). ElevenLabs is opt-in (`VITE_VOICE=eleven`). |
+| P3 | No setup. | **Done.** `npm run setup` finds the signed-in CLI (and asks when both are), writes `.env`, installs, fetches the logic simulator and anatomy skill at pinned commits, builds the kit shelf, checks for Chrome, adds Manim with `--animations`, and builds the page. A fresh clone took 13 s. If the CLI isn't signed in, the page says how to connect (`GET /setup`). |
+| P4 | Code on the student's machine, steered by uploads. | **Done for agents and the C runner.** Agents on both providers read and write only their folder plus named read-only folders, can't read the home folder, and have no network. This was tested by trying each escape. Claude uses its sandbox's `denyRead`/`allowRead`, with Read/Glob/Grep left to dontAsk and Edit scoped to the folder. Codex uses a permission profile (`:root` read, `~` deny, workspace write, network off). The C compiler now runs in the sandbox too (an `#include` of a home file is refused), and programs can't read the home folder. Linux: untested (Claude uses bubblewrap there, Codex landlock). |
+| P5 | Upload names could write outside the course folder. | **Done** (`path.basename`). |
+| P6 | Local routes reachable by other pages. | **Done** for checkpoint, material-note, actor and check (Bearer token). Figures, animations and the shelf are GET-only files that another origin can show but not read. Host-header checking stops DNS rebinding. No change needed. |
+| P7 | Hard-coded to the owner. | **Done**: `HARNESS_SINCE` is gone (every guide course is a harness course), the guide is the default knowledge source, and the voice is optional. The "prelim" wording is generic (looksLikeExam), and the circuit tool stays built in. |
+
+## Found in testing (19 Oct), fixed
+
+- Space, the talk key, deleted the spaces typed in the new-course form's "What are you studying for?" box (it skipped inputs, not textareas). **This bug is also live on 5188.**
+- A file dropped on the new-course form also made a second course, named after the file (the page-wide drop handler took it too). **Also on 5188.**
+- With no course yet, the course panel showed placeholders forever. It now opens the new-course form.
+- Claude's command allowlist blocked ordinary agent commands (`python3 x.py | tee out`). Agents now run any command inside the sandbox, which is the real fence.
 
 ## Should fix for beta
 
-- **Personal data at rest:**
-  - Server-spawned CLI calls save transcripts into the user's own `~/.claude/projects` (1,605 folders today) and leave temp folders (1,083).
-  - Turn session saving off for Plato's calls, and delete temp folders.
-- **Deletion:** deleting a course should remove `study-guides/<id>`, its checkpoint and its figures, not just database rows.
-- **Failure messages:** "Plato is busy (your subscription's limit), try again in a minute" instead of "(error)"; no silent fallback to the other provider.
+- **Personal data at rest:** done. Claude calls run with `--no-session-persistence` (no transcripts in `~/.claude/projects`), and Codex calls are ephemeral.
+- **Deletion:** done. Deleting a course removes its study guide folder and checkpoint; figures are shared and stay.
+- **Failure messages:** partly done. A usage-limit failure on Plato's turn says so ("Your Claude plan's usage limit is reached…"). Course builds still only log it.
 - **Subscription limits:** a course build is many Opus calls (units, audit, practice, kits, checks). Show its progress and let it pause and resume on a rate limit; it already resumes after a crash.
 - **Cross-platform:** macOS first; Linux next (sandbox); Windows later.
-- **License and contribution:** LICENSE (the shelf libraries are MIT/BSD/ISC; JSXGraph is MIT or LGPL; the anatomy skill and logic-sim are MIT), README with setup, and a privacy note: "your material and chats stay on your machine and go only to the model provider you connected".
+- **License and contribution:** README done. Still needed: choose a LICENSE (the owner's call) (the shelf libraries are MIT/BSD/ISC; JSXGraph is MIT or LGPL; the anatomy skill and logic-sim are MIT), README with setup, and a privacy note: "your material and chats stay on your machine and go only to the model provider you connected".
 
 ## Product work ready (built in lab, not yet merged)
 
